@@ -48,5 +48,7 @@ jobs:
         WORKSPACE: ${{ github.workspace }}
 
     - name: Delete GPG Key
-      run: gpg --batch --pinentry-mode loopback --delete-secret-keys C6349417E6D3459640639F33F599DC1F5195036F && gpg --pinentry-mode loopback --batch --delete-keys C6349417E6D3459640639F33F599DC1F5195036F
+      run: |
+      gpg --batch --pinentry-mode loopback --yes --delete-secret-keys C6349417E6D3459640639F33F599DC1F5195036F &&
+      gpg --pinentry-mode loopback --yes --batch --delete-keys C6349417E6D3459640639F33F599DC1F5195036F
 

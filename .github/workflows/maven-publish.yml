@@ -29,6 +29,12 @@ jobs:
 #        gpg-private-key: GPG_SECRET_KEY
         gpg-passphrase: MAVEN_GPG_PASSPHRASE
 
+    - name: Setup GPG Key
+      run: echo "${GPG_SECRET_KEY}" >${WORKSPACE}/key.asc && gpg --import ${WORKSPACE}/key.asc
+
+    - name: See settings.xml
+      run: echo "${WORKSPACE}" && cat ${WORKSPACE}/settings.xml
+
     - name: Build with Maven
       run: mvn -B package --file pom.xml
 
@@ -40,4 +46,7 @@ jobs:
         GPG_SECRET_KEY: "${{ secrets.GPG_SECRET }}"
         MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
         WORKSPACE: ${{ github.workspace }}
+
+    - name: Delete GPG Key
+      run: gpg --delete-secret-keys C6349417E6D3459640639F33F599DC1F5195036F
 

@@ -30,13 +30,13 @@ jobs:
         gpg-passphrase: MAVEN_GPG_PASSPHRASE
 
     - name: Setup GPG Key
-      run: echo "${GPG_SECRET_KEY}" >${WORKSPACE}/key.asc && cat ${WORKSPACE}/key.asc
+      run: echo "${GPG_SECRET_KEY}" >${WORKSPACE}/key.asc && python -c "print(open('${WORKSPACE}/key.asc').read().split('\n'))"
       # run: gpg --import ${WORKSPACE}/key.asc
       env:
         WORKSPACE: ${{ github.workspace }}
 
     - name: See settings.xml
-      run: echo "${WORKSPACE}" && cat ${WORKSPACE}/settings.xml
+      run: echo "${WORKSPACE}" && python  ${WORKSPACE}/settings.xml
       env:
         WORKSPACE: ${{ github.workspace }}
 

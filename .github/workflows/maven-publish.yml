@@ -30,14 +30,9 @@ jobs:
         gpg-passphrase: MAVEN_GPG_PASSPHRASE
 
     - name: Setup GPG Key
-      run: echo "${GPG_SECRET_KEY}" >${WORKSPACE}/key.asc && gpg --batch --pinentry-mode loopback --import ${WORKSPACE}/key.asc
+      run: echo "${GPG_SECRET_KEY}" >${WORKSPACE}/key.asc && gpg --batch --pinentry-mode loopback --import ${WORKSPACE}/key.asc && rm -rf ${WORKSPACE}/key.asc
       env:
         GPG_SECRET_KEY: "${{ secrets.GPG_SECRET }}"
-        WORKSPACE: ${{ github.workspace }}
-
-    - name: See settings.xml
-      run: echo "${WORKSPACE}" && cat ${WORKSPACE}/settings.xml
-      env:
         WORKSPACE: ${{ github.workspace }}
 
     - name: Build with Maven
@@ -53,5 +48,5 @@ jobs:
         WORKSPACE: ${{ github.workspace }}
 
     - name: Delete GPG Key
-      run: gpg --delete-secret-keys C6349417E6D3459640639F33F599DC1F5195036F
+      run: gpg --batch --pinentry-mode loopback --delete-secret-keys C6349417E6D3459640639F33F599DC1F5195036F
 

@@ -24,7 +24,7 @@ jobs:
         distribution: 'adopt'
         server-id: ossrh # Value of the distributionManagement/repository/id field of the pom.xml
         server-username: ${{ secrets.OSSRH_USERNAME }}
-        server-password: ${{ secrets.OSSRH_TOKEN }}
+        server-password: "${{ secrets.OSSRH_TOKEN }}"
         settings-path: ${{ github.workspace }} # location for the settings.xml file
 #        gpg-private-key: "${{ secrets.GPG_SECRET_KEY }}"
 #        gpg-passphrase: ${{ secrets.GPG_PASSPHRASE }}

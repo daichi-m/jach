@@ -37,7 +37,6 @@
 
     <properties>
         <guava.version>29.0-jre</guava.version>
-        <rxjava.version>2.2.19</rxjava.version>
         <lombok.version>1.18.20</lombok.version>
         <java.version>1.8</java.version>
     </properties>
@@ -47,11 +46,6 @@
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
             <version>${guava.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>io.reactivex.rxjava2</groupId>
-            <artifactId>rxjava</artifactId>
-            <version>${rxjava.version}</version>
         </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>
@@ -119,10 +113,17 @@
             </plugin>
 
             <!-- To sign the artifacts -->
-            <!--<plugin>
+            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-gpg-plugin</artifactId>
                 <version>1.6</version>
+                <configuration>
+                    <!-- Prevent gpg from using pinentry programs -->
+                    <gpgArguments>
+                        <arg>--pinentry-mode</arg>
+                        <arg>loopback</arg>
+                    </gpgArguments>
+                </configuration>
                 <executions>
                     <execution>
                         <id>sign-artifacts</id>
@@ -132,7 +133,7 @@
                         </goals>
                     </execution>
                 </executions>
-            </plugin>-->
+            </plugin>
 
             <plugin>
                 <groupId>org.jacoco</groupId>

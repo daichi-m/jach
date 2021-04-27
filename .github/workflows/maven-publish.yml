@@ -37,5 +37,5 @@ jobs:
       env:
         MAVEN_USERNAME: ${{ secrets.OSSRH_USERNAME }}
         MAVEN_CENTRAL_TOKEN: ${{ secrets.OSSRH_TOKEN }}
-        GPG_SECRET_KEY: ${{ secrets.GPG_SECRET_KEY }}
+        GPG_SECRET_KEY: "${{ secrets.GPG_SECRET_KEY }}"
         MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}

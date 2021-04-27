@@ -24,7 +24,7 @@ jobs:
         distribution: 'adopt'
         server-id: github # Value of the distributionManagement/repository/id field of the pom.xml
         settings-path: ${{ github.workspace }} # location for the settings.xml file
-        gpg-private-key: ${{ secrets.GPG_SIGNING_KEY }}
+        gpg-private-key: GPG_SIGNING_KEY
         gpg-passphrase: ${{ secrets.GPG_PASSPHRASE }}
 
     - name: Build with Maven
@@ -35,4 +35,4 @@ jobs:
       env:
         MAVEN_USERNAME: ${{ secrets.OSSRH_USERNAME }}
         MAVEN_PASSWORD: ${{ secrets.OSSRH_TOKEN }}
-        GPG_SIGNING_KEY: ${{ secrets.GPG_SIGNING_KEY }}
+        GPG_SIGNING_KEY: ${{ secrets.GPG_SIGNING_KEY }} | base64 --decode

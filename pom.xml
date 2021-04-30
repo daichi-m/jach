@@ -5,6 +5,19 @@
     <groupId>io.github.daichi-m</groupId>
     <artifactId>jach</artifactId>
     <version>0.0.3-SNAPSHOT</version>
+    <name>JaCh</name>
+    <url>https://github.com/daichi-m/jach</url>
+    <description>
+        JaCh (pronounced like Bach) is an implementation of Golang channels in Java.
+    </description>
+
+    <licenses>
+        <license>
+            <name>MIT License</name>
+            <url>http://www.opensource.org/licenses/mit-license.php</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
 
     <developers>
         <developer>

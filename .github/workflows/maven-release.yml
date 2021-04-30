@@ -38,7 +38,7 @@ jobs:
         run: mvn -B clean package --file pom.xml
 
       - name: Publish to Maven Central
-        run: mvn -B --settings ${WORKSPACE}/settings.xml clean deploy nexus-staging:release
+        run: mvn -B --settings ${WORKSPACE}/settings.xml clean release:prepare deploy nexus-staging:release release:perform
         env:
           MAVEN_USERNAME: ${{ secrets.OSSRH_USERNAME }}
           MAVEN_CENTRAL_TOKEN: ${{ secrets.OSSRH_TOKEN }}

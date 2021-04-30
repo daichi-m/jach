@@ -7,6 +7,7 @@ on:
   release:
     types:
       - created
+  workflow_dispatch: {}
 
 jobs:
   build:
@@ -37,7 +38,9 @@ jobs:
         run: mvn -B package --file pom.xml
 
       - name: Publish to Maven Central
-        run: mvn --batch-mode --settings ${WORKSPACE}/settings.xml nexus-staging:release
+        run: >-
+          mvn --batch-mode --settings ${WORKSPACE}/settings.xml deploy &&
+          mvn --batch-mode --settings ${WORKSPACE}/settings.xml nexus-staging:release
         env:
           MAVEN_USERNAME: ${{ secrets.OSSRH_USERNAME }}
           MAVEN_CENTRAL_TOKEN: ${{ secrets.OSSRH_TOKEN }}

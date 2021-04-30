@@ -39,7 +39,7 @@ jobs:
 
       - name: Publish to Maven Central
         run: >-
-          mvn --batch-mode --settings ${WORKSPACE}/settings.xml deploy &&
+          mvn --batch-mode --settings ${WORKSPACE}/settings.xml deploy -Prelease  &&
           mvn --batch-mode --settings ${WORKSPACE}/settings.xml nexus-staging:release
         env:
           MAVEN_USERNAME: ${{ secrets.OSSRH_USERNAME }}

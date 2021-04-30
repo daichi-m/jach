@@ -17,8 +17,8 @@
     </developers>
 
     <scm>
-        <connection>scm:git:git@github.com/daichi-m/jach.git</connection>
-        <developerConnection>scm:git:git@github.com/daichi-m/jach.git</developerConnection>
+        <connection>scm:git:https://github.com/daichi-m/jach.git</connection>
+        <developerConnection>scm:git:https://github.com/daichi-m/jach.git</developerConnection>
         <tag>HEAD</tag>
         <url>https://github.com/daichi-m/jach.git</url>
     </scm>

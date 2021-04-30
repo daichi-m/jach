@@ -1,6 +1,6 @@
-package com.daichim.jach.main;
+package io.github.daichim.jach.main;
 
-import com.daichim.jach.exception.ClosedChannelException;
+import io.github.daichim.jach.exception.ClosedChannelException;
 
 import java.util.Iterator;
 import java.util.NoSuchElementException;

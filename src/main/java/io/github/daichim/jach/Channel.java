@@ -1,6 +1,6 @@
-package com.daichim.jach;
+package io.github.daichim.jach;
 
-import com.daichim.jach.exception.ClosedChannelException;
+import io.github.daichim.jach.exception.ClosedChannelException;
 
 import java.util.Spliterator;
 
@@ -14,7 +14,7 @@ import java.util.Spliterator;
  * <p>
  * Channel is also {@link AutoCloseable} so it can be initialized in a try-with-resource block.
  *
- * @param <T> The type of data which the {@link Channel} holds.
+ * @param <T> The type of the message which the {@link Channel} holds.
  */
 public interface Channel<T> extends AutoCloseable, Iterable<T> {
 

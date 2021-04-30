@@ -1,8 +1,8 @@
-package com.daichim.jach;
+package io.github.daichim.jach;
 
-import com.daichim.jach.exception.ClosedChannelException;
-import com.daichim.jach.exception.NoSuchChannelElementException;
-import com.daichim.jach.internal.BufferedChannelIterator;
+import io.github.daichim.jach.exception.ClosedChannelException;
+import io.github.daichim.jach.exception.NoSuchChannelElementException;
+import io.github.daichim.jach.internal.ChannelIterator;
 import com.google.common.base.Preconditions;
 
 import java.util.Collections;
@@ -40,6 +40,8 @@ import java.util.function.Consumer;
  * channel closures gracefully. This method does not propagate the {@link
  * NoSuchChannelElementException} to the caller and the method only returns to the caller when the
  * channel is closed.
+ *
+ * @param <T> The type of the message which the {@link BufferedChannel} holds.
  */
 
 public class BufferedChannel<T> implements Channel<T> {
@@ -48,7 +50,7 @@ public class BufferedChannel<T> implements Channel<T> {
     private final int capacity;
     private final Map<Long, Thread> writeThreads;
     private final Map<Long, Thread> readThreads;
-    private final BufferedChannelIterator<T> iterator;
+    private final ChannelIterator<T> iterator;
     private volatile boolean openState;
 
 
@@ -58,7 +60,7 @@ public class BufferedChannel<T> implements Channel<T> {
         this.openState = true;
         this.readThreads = Collections.synchronizedMap(new HashMap<>());
         this.writeThreads = Collections.synchronizedMap(new HashMap<>());
-        this.iterator = new BufferedChannelIterator<>(this);
+        this.iterator = new ChannelIterator<>(this);
     }
 
     /**
@@ -114,7 +116,7 @@ public class BufferedChannel<T> implements Channel<T> {
         if (!openState) {
             throw new ClosedChannelException("Channel has been closed for reading");
         }
-        T msg = internalQueue.peek();
+        T msg = internalQueue.poll();
         if (msg != null) {
             return msg;
         }

@@ -43,7 +43,7 @@ jobs:
           git config user.name "GitHub Actions"
 
       - name: Publish to Maven Central
-        run: mvn -B --settings ${WORKSPACE}/settings.xml clean release:prepare deploy release:perform nexus-staging:release
+        run: mvn -B --settings ${WORKSPACE}/settings.xml clean release:prepare nexus-staging:release release:perform
         env:
           MAVEN_USERNAME: ${{ secrets.OSSRH_USERNAME }}
           MAVEN_CENTRAL_TOKEN: ${{ secrets.OSSRH_TOKEN }}

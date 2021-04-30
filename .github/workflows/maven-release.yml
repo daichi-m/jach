@@ -35,12 +35,12 @@ jobs:
           WORKSPACE: ${{ github.workspace }}
 
       - name: Build with Maven
-        run: mvn -B package --file pom.xml
+        run: mvn -B clean install --file pom.xml
 
       - name: Publish to Maven Central
         run: >-
-          mvn --batch-mode --settings ${WORKSPACE}/settings.xml deploy -Prelease  &&
-          mvn --batch-mode --settings ${WORKSPACE}/settings.xml nexus-staging:release
+          mvn -B --settings ${WORKSPACE}/settings.xml clean deploy -P release  &&
+          mvn -B --settings ${WORKSPACE}/settings.xml nexus-staging:release
         env:
           MAVEN_USERNAME: ${{ secrets.OSSRH_USERNAME }}
           MAVEN_CENTRAL_TOKEN: ${{ secrets.OSSRH_TOKEN }}

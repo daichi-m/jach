@@ -6,11 +6,6 @@ name: Maven Publish Snapshot
 on:
   push:
     branches:
-      - 'main'
-#      - 'develop'
-  pull_request:
-    branches:
-      - 'main'
       - 'develop'
 
 jobs:
@@ -51,6 +46,7 @@ jobs:
         WORKSPACE: ${{ github.workspace }}
 
     - name: Delete GPG Key
+      if: always()
       run: >-
         gpg --batch --pinentry-mode loopback --yes --delete-secret-keys C6349417E6D3459640639F33F599DC1F5195036F &&
         gpg --pinentry-mode loopback --yes --batch --delete-keys C6349417E6D3459640639F33F599DC1F5195036F

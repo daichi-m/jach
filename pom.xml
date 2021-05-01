@@ -209,6 +209,12 @@
                         <goals>
                             <goal>report</goal>
                         </goals>
+                        <configuration>
+                            <excludes>
+                                <exclude>io.github.daichim.jach.exception.*</exclude>
+                                <title>JaCh Code Coverage</title>
+                            </excludes>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>

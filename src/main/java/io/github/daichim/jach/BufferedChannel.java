@@ -231,9 +231,6 @@ public class BufferedChannel<T> implements Channel<T> {
             while (!(this.isClosed() && this.internalQueue.isEmpty())) {
                 T msg = this.read();
                 action.accept(msg);
-                if (Thread.currentThread().isInterrupted()) {
-
-                }
             }
         } catch (ClosedChannelException | IllegalStateException ex) {
             // Done iterating. Do nothing

@@ -317,6 +317,11 @@ public class BufferedChannelTest {
         Assert.assertEquals(actionCtr.get(), 100);
     }
 
+    @Test(expectedExceptions = UnsupportedOperationException.class)
+    public void spliteratorTest() {
+        testChannel.spliterator();
+    }
+
     @AfterMethod
     public void closeChannel() throws Exception {
         if (testChannel != null) {

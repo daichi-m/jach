@@ -61,6 +61,13 @@ public class ChannelIteratorTest {
         int msg = iterator.next();
     }
 
+    @Test(expectedExceptions = UnsupportedOperationException.class)
+    public void removeTest() {
+        BufferedChannel<Integer> channel = Mockito.mock(BufferedChannel.class);
+        ChannelIterator<Integer> iterator = new ChannelIterator<>(channel);
+        iterator.remove();
+    }
+
 
     @Test(enabled = true)
     public void forEachRemainingTest() throws Exception {

@@ -45,6 +45,9 @@ jobs:
         MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
         WORKSPACE: ${{ github.workspace }}
 
+    - name: Codecov
+      run: bash <(curl -s https://codecov.io/bash)
+
     - name: Delete GPG Key
       if: always()
       run: >-

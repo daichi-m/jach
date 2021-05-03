@@ -15,9 +15,9 @@ public class Channels {
      *
      * @return A new instance of {@link Channel} with the given capacity.
      */
-    public static <T> Channel<T> newChannel(int capacity) {
-        return new BufferedChannel<>(capacity);
-    }
+//    public static <T> Channel<T> newChannel(int capacity) {
+//        return new BufferedChannel<>(capacity);
+//    }
 
     /**
      * Creates a new {@link Channel} which does not have any backing store. Every write will block
@@ -28,8 +28,8 @@ public class Channels {
      *
      * @return a new instance of {@link Channel} which does not have any backing store.
      */
-    public static <T> Channel<T> newUnbufferedChannel() {
-        return new UnbufferedChannel<>();
-    }
+//    public static <T> Channel<T> newUnbufferedChannel() {
+//        return new UnbufferedChannel<>();
+//    }
 
 }

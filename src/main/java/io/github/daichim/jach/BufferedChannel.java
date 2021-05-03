@@ -4,6 +4,7 @@ import io.github.daichim.jach.exception.ClosedChannelException;
 import io.github.daichim.jach.exception.NoSuchChannelElementException;
 import io.github.daichim.jach.internal.ChannelIterator;
 import com.google.common.base.Preconditions;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -44,6 +45,7 @@ import java.util.function.Consumer;
  * @param <T> The type of the message which the {@link BufferedChannel} holds.
  */
 
+@Slf4j
 public class BufferedChannel<T> implements Channel<T> {
 
     private final BlockingQueue<T> internalQueue;
@@ -90,6 +92,7 @@ public class BufferedChannel<T> implements Channel<T> {
         try {
             Thread currThread = Thread.currentThread();
             this.writeThreads.put(currThread.getId(), currThread);
+            log.debug("Added thread {} as writer", currThread.getName());
             internalQueue.put(msg);
         } catch (InterruptedException ex) {
             if (!openState) {
@@ -113,7 +116,7 @@ public class BufferedChannel<T> implements Channel<T> {
      */
     @Override
     public T read() throws ClosedChannelException {
-        if (!openState) {
+        if (!openState && internalQueue.size() == 0) {
             throw new ClosedChannelException("Channel has been closed for reading");
         }
         T msg = internalQueue.poll();
@@ -124,14 +127,17 @@ public class BufferedChannel<T> implements Channel<T> {
         try {
             Thread currThread = Thread.currentThread();
             this.readThreads.put(currThread.getId(), currThread);
+            log.debug("Added thread {} as reader", currThread.getName());
             msg = internalQueue.take();
             Preconditions.checkNotNull(msg);
             return msg;
         } catch (InterruptedException ex) {
-            if (!openState) {
+            if (!openState && internalQueue.size() == 0) {
                 throw new ClosedChannelException("Channel got closed before any read could happen");
             }
             throw new IllegalStateException();
+        } finally {
+            this.readThreads.remove(Thread.currentThread().getId());
         }
     }
 
@@ -150,6 +156,7 @@ public class BufferedChannel<T> implements Channel<T> {
         synchronized (this.readThreads) {
             readers.forEach(ent -> {
                 Thread thr = ent.getValue();
+                log.debug("Read thread interrupted: {}", thr.getName());
                 thr.interrupt();
             });
         }
@@ -158,6 +165,7 @@ public class BufferedChannel<T> implements Channel<T> {
         synchronized (this.writeThreads) {
             writers.forEach(ent -> {
                 Thread thr = ent.getValue();
+                log.debug("Write thread interrupted: {}", thr.getName());
                 thr.interrupt();
             });
         }
@@ -220,7 +228,7 @@ public class BufferedChannel<T> implements Channel<T> {
     @Override
     public void forEach(Consumer<? super T> action) {
         try {
-            if (!this.isClosed()) {
+            while (!(this.isClosed() && this.internalQueue.isEmpty())) {
                 T msg = this.read();
                 action.accept(msg);
             }

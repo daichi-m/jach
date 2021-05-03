@@ -54,7 +54,7 @@ public class ChannelIterator<T> implements Iterator<T> {
             return parentChannel.read();
         } catch (ClosedChannelException | IllegalStateException ex) {
             this.done = true;
-            throw new NoSuchElementException();
+            throw new NoSuchChannelElementException();
         } catch (NullPointerException ex) {
             return next();
         }

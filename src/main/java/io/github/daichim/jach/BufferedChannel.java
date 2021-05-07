@@ -1,19 +1,25 @@
 package io.github.daichim.jach;
 
+import com.google.common.base.Preconditions;
 import io.github.daichim.jach.exception.ClosedChannelException;
 import io.github.daichim.jach.exception.NoSuchChannelElementException;
+import io.github.daichim.jach.exception.TimeoutException;
 import io.github.daichim.jach.internal.ChannelIterator;
-import com.google.common.base.Preconditions;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
  * {@link BufferedChannel} is an implementation of a {@link Channel} that has a fixed size buffer
@@ -50,18 +56,23 @@ public class BufferedChannel<T> implements Channel<T> {
 
     private final BlockingQueue<T> internalQueue;
     private final int capacity;
-    private final Map<Long, Thread> writeThreads;
-    private final Map<Long, Thread> readThreads;
+    private final Class<T> clazz;
+    private final String channelId;
+    private final Map<Long, Thread> blockedWriters;
+    private final Map<Long, Thread> blockedReaders;
     private final ChannelIterator<T> iterator;
-    private volatile boolean openState;
+    private volatile boolean open;
 
 
-    public BufferedChannel(int capacity) {
+    public BufferedChannel(int capacity, Class<T> clazz) {
+        this.clazz = clazz;
         this.capacity = capacity;
         this.internalQueue = new ArrayBlockingQueue<>(capacity, true);
-        this.openState = true;
-        this.readThreads = Collections.synchronizedMap(new HashMap<>());
-        this.writeThreads = Collections.synchronizedMap(new HashMap<>());
+        this.channelId = UUID.randomUUID().toString();
+        this.open = true;
+
+        this.blockedReaders = Collections.synchronizedMap(new HashMap<>());
+        this.blockedWriters = Collections.synchronizedMap(new HashMap<>());
         this.iterator = new ChannelIterator<>(this);
     }
 
@@ -77,67 +88,185 @@ public class BufferedChannel<T> implements Channel<T> {
      * @see Channel#write(Object)
      */
     @Override
-    public void write(T msg) throws ClosedChannelException, IllegalStateException {
+    public void write(T message) throws ClosedChannelException, IllegalStateException {
+        try {
+            blockedWrite(message, Optional.empty(), Optional.empty());
+        } catch (TimeoutException ignored) {
+        }
+    }
 
-        Preconditions.checkNotNull(msg);
+    /**
+     * Tries writing a message to the {@link BufferedChannel}, blocking if space is not available
+     * for a maximum of the timeout period.
+     *
+     * @param message The message to write to the {@link BufferedChannel}.
+     * @param timeout The timeout value after which the write times out.
+     * @param unit    The unit of the timeout value.
+     *
+     * @throws TimeoutException       If the write times out after the timeout period.
+     * @throws ClosedChannelException If the {@link BufferedChannel} has already been closed for
+     *                                writing.
+     */
+    @Override
+    public void write(T message, int timeout, TimeUnit unit) throws TimeoutException {
+        blockedWrite(message, Optional.of(timeout), Optional.ofNullable(unit));
+    }
 
-        if (!openState) {
+    /**
+     * Tries writing a message to the {@link BufferedChannel}. If the write is successful, returns
+     * {@literal true}, if the write fails due to lack of space, returns {@literal false}.
+     *
+     * @param message The message to write to the {@link BufferedChannel}.
+     *
+     * @return {@literal true} if the write succeeds, {@literal false} otherwise.
+     *
+     * @throws ClosedChannelException If the channel has already been closed for writing.
+     */
+    @Override
+    public boolean tryWrite(T message) {
+        Preconditions.checkNotNull(message);
+        if (!open) {
             throw new ClosedChannelException("Channel is already closed for writing");
         }
-        boolean succ = internalQueue.offer(msg);
-        if (succ) {
-            return;
+        return internalQueue.offer(message);
+    }
+
+
+    private void blockedWrite(T message, Optional<Integer> timeout, Optional<TimeUnit> unit)
+        throws TimeoutException {
+        Preconditions.checkNotNull(message);
+        if (!open) {
+            throw new ClosedChannelException("Channel is already closed for writing");
         }
 
+        Thread currThread = Thread.currentThread();
         try {
-            Thread currThread = Thread.currentThread();
-            this.writeThreads.put(currThread.getId(), currThread);
-            log.debug("Added thread {} as writer", currThread.getName());
-            internalQueue.put(msg);
+            if (internalQueue.offer(message)) {
+                return;
+            }
+            this.blockedWriters.put(currThread.getId(), currThread);
+            if (timeout.isPresent()) {
+                boolean succ =
+                    internalQueue.offer(message, timeout.get(), unit.orElse(MILLISECONDS));
+                if (!succ) {
+                    throw new TimeoutException();
+                }
+            } else {
+                internalQueue.put(message);
+            }
         } catch (InterruptedException ex) {
-            if (!openState) {
+            if (!open) {
                 throw new ClosedChannelException("Channel got closed before write could complete");
             }
             throw new IllegalStateException();
         } finally {
-            this.writeThreads.remove(Thread.currentThread().getId());
+            this.blockedWriters.remove(currThread.getId());
         }
+    }
+
+    @Override
+    public boolean canWrite() {
+        return isOpen() && internalQueue.size() < capacity;
     }
 
     /**
      * Reads the next message from the channel. If the channel is currently empty, the thread blocks
      * until a message is available for reading.
      *
-     * @throws ClosedChannelException If the channel is already closed, or channel got closed before
-     *                                the read could be completed.
-     * @throws IllegalStateException  If there was an unexpected error in reading the channel.
-     * @throws NullPointerException   If the read message was {@literal null}.
+     * @throws NoSuchChannelElementException If there are no further element that can be available
+     *                                       (because the {@link Channel} got closed).
+     * @throws IllegalStateException         If there was an unexpected error in reading the
+     *                                       channel.
      * @see Channel#read()
      */
     @Override
-    public T read() throws ClosedChannelException {
-        if (!openState && internalQueue.size() == 0) {
-            throw new ClosedChannelException("Channel has been closed for reading");
+    public T read() throws NoSuchChannelElementException, IllegalStateException {
+        return blockedRead(Optional.empty(), Optional.empty());
+    }
+
+    /**
+     * Reads the next message from the channel. If the channel is currently empty, the read blocks
+     * until a message is available or the timeout period is over.
+     *
+     * @param timeout The timeout value after which read times out.
+     * @param unit    The unit corresponding to the timeout value.
+     *
+     * @return The next element from the {@link Channel}.
+     *
+     * @throws TimeoutException              If no message can be read within the given timeout
+     *                                       period.
+     * @throws NoSuchChannelElementException If there are no further element that can be available
+     *                                       (because the {@link Channel} got closed).
+     * @throws IllegalStateException         If there was an unexpected error in reading the
+     *                                       channel.
+     * @throws NullPointerException          If the read message was {@literal null}.
+     */
+    @Override
+    public T read(int timeout, TimeUnit unit) throws TimeoutException {
+        return blockedRead(Optional.of(timeout), Optional.ofNullable(unit));
+    }
+
+    /**
+     * Tries to read the next message from the {@link Channel}. If the channel is empty, it returns
+     * {@literal null}.
+     *
+     * @return The next message from the {@link Channel} or {@literal null} of the channel is empty.
+     *
+     * @throws NoSuchChannelElementException If there are no further element that can be read from
+     *                                       the channel (because the channel has been closed).
+     */
+    @Override
+    public T tryRead() {
+        if (!open && internalQueue.isEmpty()) {
+            throw new NoSuchChannelElementException();
         }
-        T msg = internalQueue.poll();
-        if (msg != null) {
-            return msg;
+        return internalQueue.poll();
+    }
+
+    /**
+     * Returns {@literal true} if the channel can be read. It does not guarantee that the next
+     * {@link #read()} call will succeed, since another thread might have read the data between the
+     * invocation of this method and a corresponding read.
+     *
+     * @return {@literal true} if the channel can be read, else {@literal false}.
+     */
+    @Override
+    public boolean canRead() {
+        return !internalQueue.isEmpty();
+    }
+
+    private T blockedRead(Optional<Integer> timeout, Optional<TimeUnit> unit)
+        throws NoSuchChannelElementException, IllegalStateException {
+        if (!open && internalQueue.isEmpty()) {
+            throw new NoSuchChannelElementException();
         }
+        Thread currThread = Thread.currentThread();
+
 
         try {
-            Thread currThread = Thread.currentThread();
-            this.readThreads.put(currThread.getId(), currThread);
+            T msg = internalQueue.poll();
+            if (msg != null) {
+                return msg;
+            }
+            this.blockedReaders.put(currThread.getId(), currThread);
             log.debug("Added thread {} as reader", currThread.getName());
-            msg = internalQueue.take();
-            Preconditions.checkNotNull(msg);
+
+            if (timeout.isPresent()) {
+                msg = internalQueue.poll(timeout.get(), unit.orElse(MILLISECONDS));
+                if (msg == null) {
+                    throw new TimeoutException();
+                }
+            } else {
+                msg = internalQueue.take();
+            }
             return msg;
         } catch (InterruptedException ex) {
-            if (!openState && internalQueue.size() == 0) {
-                throw new ClosedChannelException("Channel got closed before any read could happen");
+            if (!open && internalQueue.isEmpty()) {
+                throw new NoSuchChannelElementException();
             }
             throw new IllegalStateException();
         } finally {
-            this.readThreads.remove(Thread.currentThread().getId());
+            this.blockedReaders.remove(Thread.currentThread().getId());
         }
     }
 
@@ -150,10 +279,10 @@ public class BufferedChannel<T> implements Channel<T> {
      */
     @Override
     public void close() {
-        this.openState = false;
+        this.open = false;
 
-        Set<Map.Entry<Long, Thread>> readers = this.readThreads.entrySet();
-        synchronized (this.readThreads) {
+        Set<Map.Entry<Long, Thread>> readers = this.blockedReaders.entrySet();
+        synchronized (this.blockedReaders) {
             readers.forEach(ent -> {
                 Thread thr = ent.getValue();
                 log.debug("Read thread interrupted: {}", thr.getName());
@@ -161,8 +290,8 @@ public class BufferedChannel<T> implements Channel<T> {
             });
         }
 
-        Set<Map.Entry<Long, Thread>> writers = this.writeThreads.entrySet();
-        synchronized (this.writeThreads) {
+        Set<Map.Entry<Long, Thread>> writers = this.blockedWriters.entrySet();
+        synchronized (this.blockedWriters) {
             writers.forEach(ent -> {
                 Thread thr = ent.getValue();
                 log.debug("Write thread interrupted: {}", thr.getName());
@@ -178,8 +307,18 @@ public class BufferedChannel<T> implements Channel<T> {
      * @return {@literal true}, if the channel has been closed, {@literal false} otherwise.
      */
     @Override
-    public boolean isClosed() {
-        return !openState;
+    public boolean isOpen() {
+        return open;
+    }
+
+    /**
+     * Returns a unique id for this {@link Channel}.
+     *
+     * @return A unique id for this {@link Channel}.
+     */
+    @Override
+    public String getId() {
+        return channelId;
     }
 
     /**
@@ -228,7 +367,7 @@ public class BufferedChannel<T> implements Channel<T> {
     @Override
     public void forEach(Consumer<? super T> action) {
         try {
-            while (!(this.isClosed() && this.internalQueue.isEmpty())) {
+            while (this.isOpen() || !this.internalQueue.isEmpty()) {
                 T msg = this.read();
                 action.accept(msg);
             }

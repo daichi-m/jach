@@ -2,6 +2,7 @@ package io.github.daichim.jach;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import io.github.daichim.jach.exception.ClosedChannelException;
+import io.github.daichim.jach.exception.NoSuchChannelElementException;
 import lombok.extern.slf4j.Slf4j;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
@@ -40,13 +41,16 @@ public class BufferedChannelTest {
 
     @BeforeMethod
     public void initializeChannelForWrite() {
-        this.testChannel = new BufferedChannel<>(CAPACITY);
-        log.info("Channel initialized");
+        this.testChannel = new BufferedChannel<>(CAPACITY, Integer.class);
+        log.debug("Channel initialized");
     }
 
+
+    // ------- UT's for write operation --------- //
     @Test(groups = "channel_write", description = "Successfully write messages to channel")
     public void writeTestSuccess() throws Exception {
-        try (BufferedChannel<Integer> testChannel = new BufferedChannel<>(CAPACITY)) {
+        try (BufferedChannel<Integer> testChannel =
+                 new BufferedChannel<>(CAPACITY, Integer.class)) {
 
             Future<?> fut = threadPool.submit(() -> {
                 for (int i = 0; i < CAPACITY; i++) {
@@ -56,14 +60,15 @@ public class BufferedChannelTest {
             });
             fut.get(1, TimeUnit.SECONDS);
             Assert.assertTrue(fut.isDone());
-            log.info("Messages written without blocking");
+            log.debug("Messages written without blocking");
         }
     }
 
     @Test(expectedExceptions = TimeoutException.class, groups = "channel_write",
         description = "Blocks writing to channel due to buffer full")
     public void writeTestBlocks() throws Exception {
-        try (BufferedChannel<Integer> testChannel = new BufferedChannel<>(CAPACITY)) {
+        try (BufferedChannel<Integer> testChannel =
+                 new BufferedChannel<>(CAPACITY, Integer.class)) {
             Future<?> fut = threadPool.submit(() -> {
                 for (int i = 0; i < CAPACITY + 1; i++) {
                     testChannel.write(LIFE_UNIVERSE_AND_EVERYTHING);
@@ -72,7 +77,7 @@ public class BufferedChannelTest {
             });
             fut.get(2, TimeUnit.SECONDS);
             Assert.assertFalse(fut.isDone());
-            log.info("Thread is blocked in write");
+            log.debug("Thread is blocked in write");
         }
     }
 
@@ -80,7 +85,8 @@ public class BufferedChannelTest {
         description = "Blocks writing to channel due to buffer full, "
             + "but then unblocked due to a subsequent read")
     public void writeTestBlocksAndUnblocks() throws Exception {
-        try (BufferedChannel<Integer> testChannel = new BufferedChannel<>(CAPACITY)) {
+        try (BufferedChannel<Integer> testChannel =
+                 new BufferedChannel<>(CAPACITY, Integer.class)) {
             Future<?> fut = threadPool.submit(() -> {
                 for (int i = 0; i < CAPACITY + 1; i++) {
                     testChannel.write(LIFE_UNIVERSE_AND_EVERYTHING);
@@ -92,13 +98,81 @@ public class BufferedChannelTest {
             } catch (TimeoutException ignored) {
             }
             Assert.assertFalse(fut.isDone());
-            log.info("Thread is blocked in write");
+            log.debug("Thread is blocked in write");
 
             int msg = testChannel.read();
             log.debug("Read in message {}", msg);
             fut.get(1, TimeUnit.SECONDS);
             Assert.assertTrue(fut.isDone());
-            log.info("Thread got unblocked after one write");
+            log.debug("Thread got unblocked after one write");
+        }
+    }
+
+
+    @Test(groups = "channel_write",
+        expectedExceptions = io.github.daichim.jach.exception.TimeoutException.class,
+        description = "Times out writing data to channel")
+    public void writeTestTimesOut() throws Throwable {
+        try (BufferedChannel<Integer> testChannel =
+                 new BufferedChannel<>(CAPACITY, Integer.class)) {
+            Future<?> fut = threadPool.submit(() -> {
+                for (int i = 0; i < CAPACITY + 5; i++) {
+                    testChannel.write(LIFE_UNIVERSE_AND_EVERYTHING, 100, TimeUnit.MILLISECONDS);
+                    log.debug("Message id {} written", i);
+                }
+                Assert.fail("Write did not timeout");
+            });
+            try {
+                fut.get(1, TimeUnit.SECONDS);
+            } catch (TimeoutException ignored) {
+            } catch (ExecutionException ex) {
+                throw ex.getCause();
+            }
+        }
+    }
+
+
+    @Test(groups = "channel_write", description = "Try writing and succeed")
+    public void tryWriteSuccess() throws Throwable {
+        try (BufferedChannel<Integer> testChannel =
+                 new BufferedChannel<>(CAPACITY, Integer.class)) {
+            Future<?> fut = threadPool.submit(() -> {
+                for (int i = 0; i < CAPACITY; i++) {
+                    boolean res = testChannel.tryWrite(LIFE_UNIVERSE_AND_EVERYTHING);
+                    log.debug("Message id {} written", i);
+                    Assert.assertTrue(res);
+                }
+            });
+            try {
+                fut.get(1, TimeUnit.SECONDS);
+                Assert.assertTrue(fut.isDone());
+            } catch (Exception ex) {
+                Assert.fail();
+            }
+        }
+    }
+
+    @Test(groups = "channel_write", description = "Try writing, succeed and then fails")
+    public void tryWriteFails() throws Throwable {
+        try (BufferedChannel<Integer> testChannel =
+                 new BufferedChannel<>(CAPACITY, Integer.class)) {
+            Future<?> fut = threadPool.submit(() -> {
+                for (int i = 0; i < CAPACITY + 5; i++) {
+                    boolean res = testChannel.tryWrite(LIFE_UNIVERSE_AND_EVERYTHING);
+                    log.debug("Message id {} -> result {}", i, res);
+                    if (i < CAPACITY) {
+                        Assert.assertTrue(res);
+                    } else {
+                        Assert.assertFalse(res);
+                    }
+                }
+            });
+            try {
+                fut.get(1, TimeUnit.SECONDS);
+                Assert.assertTrue(fut.isDone());
+            } catch (Exception ex) {
+                Assert.fail();
+            }
         }
     }
 
@@ -106,7 +180,8 @@ public class BufferedChannelTest {
         description = "Write to a closed channel")
     public void writeToClosedChannel() throws Exception {
         Future<?> fut = null;
-        try (BufferedChannel<Integer> testChannel = new BufferedChannel<>(CAPACITY)) {
+        try (BufferedChannel<Integer> testChannel =
+                 new BufferedChannel<>(CAPACITY, Integer.class)) {
             fut = threadPool.submit(() -> {
                 for (int i = 0; i < CAPACITY + 1; i++) {
                     testChannel.write(LIFE_UNIVERSE_AND_EVERYTHING);
@@ -130,6 +205,19 @@ public class BufferedChannelTest {
         testChannel.write(42);
     }
 
+    @Test
+    public void canWriteTest() {
+        Assert.assertTrue(testChannel.canWrite());
+        for (int i=0; i<CAPACITY; i++) {
+            testChannel.write(LIFE_UNIVERSE_AND_EVERYTHING);
+        }
+        Assert.assertFalse(testChannel.canWrite());
+        testChannel.close();
+        Assert.assertFalse(testChannel.canWrite());
+    }
+
+
+    // ------- UT's for read operation --------- //
     @Test(groups = "channel_read", description = "Reads messages successfully from the channel")
     public void readTestSuccess() throws Exception {
 
@@ -147,7 +235,7 @@ public class BufferedChannelTest {
         });
         fut.get(1, TimeUnit.SECONDS);
         Assert.assertTrue(fut.isDone());
-        log.info("Succesfully read in {} messages without blocking", CAPACITY);
+        log.debug("Succesfully read in {} messages without blocking", CAPACITY);
     }
 
     @Test(groups = "channel_read", description = "Blocks while reading a channel because there is"
@@ -164,7 +252,7 @@ public class BufferedChannelTest {
         } catch (TimeoutException ignored) {
         }
         Assert.assertFalse(fut.isDone());
-        log.info("Read is blocked because of no data in channel");
+        log.debug("Read is blocked because of no data in channel");
         fut.cancel(true);
     }
 
@@ -181,18 +269,65 @@ public class BufferedChannelTest {
         } catch (TimeoutException ignored) {
         }
         Assert.assertFalse(fut.isDone());
-        log.info("Read is blocked because of no data in channel");
+        log.debug("Read is blocked because of no data in channel");
 
         testChannel.write(42);
         fut.get(1, TimeUnit.SECONDS);
         Assert.assertTrue(fut.isDone());
-        log.info("Read is unblocked now after data is inserted");
+        log.debug("Read is unblocked now after data is inserted");
+    }
+
+    @Test(groups = "channel_read", description = "Read times out",
+        expectedExceptions = io.github.daichim.jach.exception.TimeoutException.class)
+    public void readTestTimeout() throws Throwable {
+        for (int i=0; i<CAPACITY; i++) {
+            testChannel.write(LIFE_UNIVERSE_AND_EVERYTHING);
+        }
+
+        Future<?> fut = threadPool.submit(() -> {
+            for (int i=0; i<CAPACITY+5; i++) {
+                int msg = testChannel.read(100, TimeUnit.MILLISECONDS);
+                log.debug("Message read in {}", msg);
+                Assert.assertTrue(msg >= 0 && msg < 100);
+            }
+        });
+        try {
+            fut.get(2, TimeUnit.SECONDS);
+            Assert.assertFalse(fut.isDone());
+        } catch (TimeoutException ignored) {
+        } catch (ExecutionException ex) {
+            throw ex.getCause();
+        }
+    }
+
+    @Test(groups = "channel_read", description = "Read times out")
+    public void tryReadTest() throws Throwable {
+
+        for (int i = 0; i < CAPACITY; i++) {
+            testChannel.write(LIFE_UNIVERSE_AND_EVERYTHING);
+        }
+        Future<?> fut = threadPool.submit(() -> {
+            for (int i = 0; i < CAPACITY + 5; i++) {
+                Integer msg = testChannel.tryRead();
+                log.debug("Message read in {}", msg);
+                if (i < CAPACITY) {
+                    Assert.assertTrue(msg >= 0 && msg < 100);
+                } else {
+                    Assert.assertNull(msg);
+                }
+            }
+        });
+        try {
+            fut.get(1, TimeUnit.SECONDS);
+        } catch (Exception ex) {
+            throw ex.getCause();
+        }
     }
 
     @Test(groups = "channel_read", description = "Read from a close channel",
-        expectedExceptions = ClosedChannelException.class)
+        expectedExceptions = NoSuchChannelElementException.class)
     public void readTestClosedChannel() throws Exception {
-        testChannel = new BufferedChannel<>(CAPACITY);
+        testChannel = new BufferedChannel<>(CAPACITY, Integer.class);
         Future<?> fut = threadPool.submit(() -> {
             int msg = testChannel.read();
             Assert.fail("Read in without blocking");
@@ -206,13 +341,30 @@ public class BufferedChannelTest {
     }
 
     @Test(groups = "channel_read", description = "Read from a close channel",
-        expectedExceptions = ClosedChannelException.class)
+        expectedExceptions = NoSuchChannelElementException.class)
     public void readTestClosedChannel2() throws Exception {
-        testChannel = new BufferedChannel<>(CAPACITY);
+        testChannel = new BufferedChannel<>(CAPACITY, Integer.class);
         testChannel.close();
         testChannel.read();
     }
 
+    @Test
+    public void canReadTest() {
+        Assert.assertFalse(testChannel.canRead());
+        for (int i=0; i<CAPACITY; i++) {
+            testChannel.write(LIFE_UNIVERSE_AND_EVERYTHING);
+        }
+        Assert.assertTrue(testChannel.canRead());
+        testChannel.close();
+        Assert.assertTrue(testChannel.canRead());
+        for (int i=0; i<CAPACITY; i++) {
+            testChannel.tryRead();
+        }
+        Assert.assertFalse(testChannel.canRead());
+    }
+
+
+    // ------- UT's for close related operations --------- //
     @Test(groups = "channel_close", description = "Close channel - check readers are interrupted")
     public void closeChannelReadInterruptTest() throws Exception {
 
@@ -231,10 +383,10 @@ public class BufferedChannelTest {
                 f.getValue().get(1, TimeUnit.SECONDS);
                 Assert.fail(String.format("Thread %d was not interrupted ", f.getKey()));
             } catch (ExecutionException ex) {
-                Assert.assertTrue(ex.getCause() instanceof ClosedChannelException);
+                Assert.assertTrue(ex.getCause() instanceof NoSuchChannelElementException);
             }
         }
-        log.info("All 10 read threads were interrupted");
+        log.debug("All 10 read threads were interrupted");
     }
 
     @Test(groups = "channel_close", description = "Close channel - check writers are interrupted")
@@ -262,13 +414,13 @@ public class BufferedChannelTest {
                 Assert.assertTrue(ex.getCause() instanceof ClosedChannelException);
             }
         }
-        log.info("All 10 write threads were interrupted");
+        log.debug("All 10 write threads were interrupted");
     }
 
     @Test(groups = "channel_close", description = "Check channel is closed")
     public void isChannelClosedTest() throws Exception {
         testChannel.close();
-        Assert.assertTrue(testChannel.isClosed());
+        Assert.assertFalse(testChannel.isOpen());
     }
 
     @Test(groups = "channel_cap", description = "Check channel capacity")
@@ -282,7 +434,7 @@ public class BufferedChannelTest {
         int avl = testChannel.getAvailable();
         Assert.assertEquals(avl, CAPACITY);
         Future<?> fut = threadPool.submit(() -> {
-            while(true) {
+            while (true) {
                 testChannel.write(LIFE_UNIVERSE_AND_EVERYTHING);
                 TimeUnit.MILLISECONDS.sleep(100);
             }
@@ -306,7 +458,7 @@ public class BufferedChannelTest {
             actionCtr.incrementAndGet();
         };
         Future<?> fut = threadPool.submit(() -> {
-            for (int i=0; i<100; i++) {
+            for (int i = 0; i < 100; i++) {
                 testChannel.write(increasingCtr.getAndIncrement());
                 log.debug("Written value: {}", increasingCtr.get());
             }
@@ -328,7 +480,7 @@ public class BufferedChannelTest {
             testChannel.close();
             testChannel = null;
         }
-        log.info("Channel closed and nullified");
+        log.debug("Channel closed and nullified");
     }
 
 

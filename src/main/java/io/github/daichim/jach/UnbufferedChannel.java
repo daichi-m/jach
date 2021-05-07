@@ -9,8 +9,8 @@ package io.github.daichim.jach;
  */
 public class UnbufferedChannel<T> extends BufferedChannel<T> {
 
-    public UnbufferedChannel() {
-        super(1);
+    public UnbufferedChannel(Class<T> clazz) {
+        super(1, clazz);
     }
 
 }

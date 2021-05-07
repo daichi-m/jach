@@ -1,48 +1,32 @@
 package io.github.daichim.jach.selector;
 
+import com.google.common.annotations.VisibleForTesting;
+import io.github.daichim.jach.BufferedChannel;
 import io.github.daichim.jach.Channel;
-import io.github.daichim.jach.UnbufferedChannel;
 
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 public class Selector {
 
-    private final Object syncObject;
-    private final Channel<String> selectorChannel;
+    private final static int CHAN_SIZE = 2048;
     private Map<String, ChannelAction> channelActions;
+    private Channel<String> selectorChannel;
 
-    public Selector(ChannelAction... actions) {
-        this.channelActions = Collections.synchronizedMap(new HashMap<>());
-        this.channelActions.putAll(Arrays.stream(actions)
-            .collect(Collectors.toMap(ca -> ca.getChannel().toString(), Function.identity())));
-        this.syncObject = new Object();
-        this.selectorChannel = new UnbufferedChannel<>(String.class);
+    @VisibleForTesting
+    Selector() {
     }
 
-    public static Selector selector(ChannelAction... actions) {
-        Selector selector = new Selector(actions);
+    public static Selector select(ChannelAction... actions) {
+        Selector selector = new Selector();
+        selector.channelActions = new HashMap<>(actions.length);
+        selector.selectorChannel = new BufferedChannel<>(CHAN_SIZE, String.class);
+        for (ChannelAction ca : actions) {
+            selector.channelActions.put(ca.getChannel().getId(), ca);
+        }
+
+
         return selector;
     }
-
-    public void select() {
-        String chan = this.selectorChannel.read();
-        ChannelAction chanAct = this.channelActions.get(chan);
-        if (chanAct == null) {
-            select();
-        }
-        synchronized (syncObject) {
-            Object obj = chanAct.getChannel().read();
-            if (obj == null) {
-                throw new NullPointerException("Could not read object");
-            }
-            chanAct.action.accept(obj);
-        }
-    }
-
 
 }

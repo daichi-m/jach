@@ -4,12 +4,15 @@ import com.google.common.base.Preconditions;
 import io.github.daichim.jach.exception.ClosedChannelException;
 import io.github.daichim.jach.exception.NoSuchChannelElementException;
 import io.github.daichim.jach.exception.TimeoutException;
+import io.github.daichim.jach.internal.AfterWriteAction;
 import io.github.daichim.jach.internal.ChannelIterator;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -60,7 +63,10 @@ public class BufferedChannel<T> implements Channel<T> {
     private final String channelId;
     private final Map<Long, Thread> blockedWriters;
     private final Map<Long, Thread> blockedReaders;
+    private final List<AfterWriteAction> afterWriteActionList;
     private final ChannelIterator<T> iterator;
+    // This is a empirical figure.
+    private final int MAX_AFTER_WRITE_ACTIONS = 25;
     private volatile boolean open;
 
 
@@ -73,7 +79,9 @@ public class BufferedChannel<T> implements Channel<T> {
 
         this.blockedReaders = Collections.synchronizedMap(new HashMap<>());
         this.blockedWriters = Collections.synchronizedMap(new HashMap<>());
+        this.afterWriteActionList = Collections.synchronizedList(new ArrayList<>());
         this.iterator = new ChannelIterator<>(this);
+
     }
 
     /**
@@ -128,7 +136,11 @@ public class BufferedChannel<T> implements Channel<T> {
         if (!open) {
             throw new ClosedChannelException("Channel is already closed for writing");
         }
-        return internalQueue.offer(message);
+        boolean success = internalQueue.offer(message);
+        if (success) {
+            runAfterWriteActions();
+        }
+        return success;
     }
 
 
@@ -142,18 +154,20 @@ public class BufferedChannel<T> implements Channel<T> {
         Thread currThread = Thread.currentThread();
         try {
             if (internalQueue.offer(message)) {
+                runAfterWriteActions();
                 return;
             }
             this.blockedWriters.put(currThread.getId(), currThread);
             if (timeout.isPresent()) {
-                boolean succ =
+                boolean success =
                     internalQueue.offer(message, timeout.get(), unit.orElse(MILLISECONDS));
-                if (!succ) {
+                if (!success) {
                     throw new TimeoutException();
                 }
             } else {
                 internalQueue.put(message);
             }
+            runAfterWriteActions();
         } catch (InterruptedException ex) {
             if (!open) {
                 throw new ClosedChannelException("Channel got closed before write could complete");
@@ -167,6 +181,12 @@ public class BufferedChannel<T> implements Channel<T> {
     @Override
     public boolean canWrite() {
         return isOpen() && internalQueue.size() < capacity;
+    }
+
+    private void runAfterWriteActions() {
+        for (AfterWriteAction afw : afterWriteActionList) {
+            afw.onWrite();
+        }
     }
 
     /**
@@ -319,6 +339,23 @@ public class BufferedChannel<T> implements Channel<T> {
     @Override
     public String getId() {
         return channelId;
+    }
+
+    /**
+     * @see Channel#getDataType()
+     */
+    @Override
+    public Class<T> getDataType() {
+        return clazz;
+    }
+
+    @Override
+    public void registerAfterWriteAction(AfterWriteAction afw) {
+        if (this.afterWriteActionList.size() >= MAX_AFTER_WRITE_ACTIONS) {
+            throw new IllegalStateException(
+                "Maximum number of AfterWriteActions registered on this channel");
+        }
+        this.afterWriteActionList.add(afw);
     }
 
     /**

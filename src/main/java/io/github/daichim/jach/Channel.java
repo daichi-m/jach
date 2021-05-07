@@ -1,6 +1,7 @@
 package io.github.daichim.jach;
 
 import io.github.daichim.jach.exception.ClosedChannelException;
+import io.github.daichim.jach.internal.AfterWriteAction;
 import io.github.daichim.jach.internal.Readable;
 import io.github.daichim.jach.internal.Writable;
 
@@ -49,6 +50,19 @@ public interface Channel<T> extends Writable<T>, Readable<T>, AutoCloseable, Ite
      * @return A unique identifier for this {@link Channel}
      */
     String getId();
+
+    /**
+     * Returns the type of the element that is stored in this {@link Channel}
+     *
+     * @return The concrete class of type T that is stored in this {@link Channel}.
+     */
+    Class<T> getDataType();
+
+
+    /**
+     * ** For internal uses only **. Register an {@link AfterWriteAction} to this {@link Channel}.
+     */
+    void registerAfterWriteAction(AfterWriteAction afw);
 
     /**
      * {@link Spliterator} is not supported for a {@link Channel}. It will throw a {@link

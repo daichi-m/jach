@@ -3,6 +3,7 @@ package io.github.daichim.jach;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import io.github.daichim.jach.exception.ClosedChannelException;
 import io.github.daichim.jach.exception.NoSuchChannelElementException;
+import io.github.daichim.jach.internal.AfterWriteAction;
 import lombok.extern.slf4j.Slf4j;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
@@ -205,15 +206,86 @@ public class BufferedChannelTest {
         testChannel.write(42);
     }
 
-    @Test
+    @Test(groups = "channel_write")
     public void canWriteTest() {
         Assert.assertTrue(testChannel.canWrite());
-        for (int i=0; i<CAPACITY; i++) {
+        for (int i = 0; i < CAPACITY; i++) {
             testChannel.write(LIFE_UNIVERSE_AND_EVERYTHING);
         }
         Assert.assertFalse(testChannel.canWrite());
         testChannel.close();
         Assert.assertFalse(testChannel.canWrite());
+    }
+
+    @Test(groups = "channel_write",
+        description = "Test if the AfterWriteAction is invoked after blocking write")
+    public void afterWriteActionsBlockingTest() throws Exception {
+        AtomicInteger afwCount = new AtomicInteger(0);
+        AfterWriteAction action = () -> {
+            afwCount.incrementAndGet();
+            log.info("AfterWriteAction invoked - {}", afwCount.get());
+        };
+        testChannel.registerAfterWriteAction(action);
+        Future<?> fut = threadPool.submit(() -> {
+            for (int i = 0; i < CAPACITY + 1; i++) {
+                testChannel.write(LIFE_UNIVERSE_AND_EVERYTHING);
+            }
+        });
+        TimeUnit.SECONDS.sleep(1);
+        Assert.assertEquals(afwCount.get(), CAPACITY);
+        testChannel.read();
+        fut.get(1, TimeUnit.SECONDS);
+        Assert.assertEquals(afwCount.get(), CAPACITY + 1);
+        Assert.assertTrue(fut.isDone());
+    }
+
+    @Test(groups = "channel_write",
+        description = "Test if the AfterWriteAction is invoked after timing out write")
+    public void afterWriteActionsTimeoutTest() throws Exception {
+        AtomicInteger afwCount = new AtomicInteger(0);
+        AfterWriteAction action = () -> {
+            afwCount.incrementAndGet();
+            log.info("AfterWriteAction invoked - {}", afwCount.get());
+        };
+        testChannel.registerAfterWriteAction(action);
+        Future<?> fut = threadPool.submit(() -> {
+            for (int i = 0; i < CAPACITY + 1; i++) {
+                testChannel.write(LIFE_UNIVERSE_AND_EVERYTHING, 100, TimeUnit.MILLISECONDS);
+            }
+        });
+        TimeUnit.SECONDS.sleep(1);
+        Assert.assertEquals(afwCount.get(), CAPACITY);
+        try {
+            fut.get(1, TimeUnit.SECONDS);
+        } catch (ExecutionException ignored) {
+        }
+        Assert.assertEquals(afwCount.get(), CAPACITY);
+        Assert.assertTrue(fut.isDone());
+    }
+
+
+    @Test(groups = "channel_write",
+        description = "Test if the AfterWriteAction is invoked after tryWrite")
+    public void afterWriteActionsTryWriteTest() throws Exception {
+        AtomicInteger afwCount = new AtomicInteger(0);
+        AfterWriteAction action = () -> {
+            afwCount.incrementAndGet();
+            log.info("AfterWriteAction invoked - {}", afwCount.get());
+        };
+        testChannel.registerAfterWriteAction(action);
+        Future<?> fut = threadPool.submit(() -> {
+            for (int i = 0; i < CAPACITY + 1; i++) {
+                testChannel.tryWrite(LIFE_UNIVERSE_AND_EVERYTHING);
+            }
+        });
+        TimeUnit.SECONDS.sleep(1);
+        Assert.assertEquals(afwCount.get(), CAPACITY);
+        try {
+            fut.get(1, TimeUnit.SECONDS);
+        } catch (ExecutionException ignored) {
+        }
+        Assert.assertEquals(afwCount.get(), CAPACITY);
+        Assert.assertTrue(fut.isDone());
     }
 
 
@@ -280,12 +352,12 @@ public class BufferedChannelTest {
     @Test(groups = "channel_read", description = "Read times out",
         expectedExceptions = io.github.daichim.jach.exception.TimeoutException.class)
     public void readTestTimeout() throws Throwable {
-        for (int i=0; i<CAPACITY; i++) {
+        for (int i = 0; i < CAPACITY; i++) {
             testChannel.write(LIFE_UNIVERSE_AND_EVERYTHING);
         }
 
         Future<?> fut = threadPool.submit(() -> {
-            for (int i=0; i<CAPACITY+5; i++) {
+            for (int i = 0; i < CAPACITY + 5; i++) {
                 int msg = testChannel.read(100, TimeUnit.MILLISECONDS);
                 log.debug("Message read in {}", msg);
                 Assert.assertTrue(msg >= 0 && msg < 100);
@@ -351,13 +423,13 @@ public class BufferedChannelTest {
     @Test
     public void canReadTest() {
         Assert.assertFalse(testChannel.canRead());
-        for (int i=0; i<CAPACITY; i++) {
+        for (int i = 0; i < CAPACITY; i++) {
             testChannel.write(LIFE_UNIVERSE_AND_EVERYTHING);
         }
         Assert.assertTrue(testChannel.canRead());
         testChannel.close();
         Assert.assertTrue(testChannel.canRead());
-        for (int i=0; i<CAPACITY; i++) {
+        for (int i = 0; i < CAPACITY; i++) {
             testChannel.tryRead();
         }
         Assert.assertFalse(testChannel.canRead());

@@ -1,18 +1,14 @@
 package io.github.daichim.jach.internal;
 
-import io.github.daichim.jach.BufferedChannel;
+import io.github.daichim.jach.channel.BufferedChannel;
 import io.github.daichim.jach.exception.ClosedChannelException;
 import io.github.daichim.jach.exception.NoSuchChannelElementException;
 import lombok.extern.slf4j.Slf4j;
-import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.MockitoAnnotations;
 import org.mockito.stubbing.Stubber;
 import org.testng.Assert;
-import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
-import javax.swing.Action;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 

@@ -1,4 +1,4 @@
-package io.github.daichim.jach;
+package io.github.daichim.jach.channel;
 
 import io.github.daichim.jach.exception.ClosedChannelException;
 import io.github.daichim.jach.internal.AfterWriteAction;

@@ -1,4 +1,4 @@
-package io.github.daichim.jach;
+package io.github.daichim.jach.channel;
 
 /**
  * {@link UnbufferedChannel} is a special {@link Channel} where only one message can be written and

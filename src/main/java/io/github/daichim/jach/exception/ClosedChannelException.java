@@ -1,6 +1,6 @@
 package io.github.daichim.jach.exception;
 
-import io.github.daichim.jach.Channel;
+import io.github.daichim.jach.channel.Channel;
 
 /**
  * Exception thrown in case of attempting to operate on a {@link Channel} which has

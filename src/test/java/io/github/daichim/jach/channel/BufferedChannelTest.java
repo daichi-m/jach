@@ -1,4 +1,4 @@
-package io.github.daichim.jach;
+package io.github.daichim.jach.channel;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import io.github.daichim.jach.exception.ClosedChannelException;

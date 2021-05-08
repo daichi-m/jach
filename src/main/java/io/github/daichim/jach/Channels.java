@@ -1,6 +1,6 @@
 package io.github.daichim.jach;
 
-import io.github.daichim.jach.selector.ChannelAction;
+import io.github.daichim.jach.channel.ChannelAction;
 
 import java.util.Arrays;
 

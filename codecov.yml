@@ -8,8 +8,8 @@ coverage:
   round: down
   range: "70...100"
 
-ignore:
-  - "**/*Exception.java"
+#ignore:
+#  - "**/*Exception.java"
 
 comment:
   layout: "reach,diff,flags,files,footer"

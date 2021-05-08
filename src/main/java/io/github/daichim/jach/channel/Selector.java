@@ -17,13 +17,13 @@ import java.util.function.Consumer;
  *
  * <pre>
  *     Selector selector = Selector.of(
- *        ChannelAction.actOn(channel, msg -> {
+ *        ChannelAction.actOn(channel, msg -&#62; {
  *            // Do something awesome.
  *        },
- *        ChannelAction.actOn(channel1, msg1 -> {
+ *        ChannelAction.actOn(channel1, msg1 -&#62; {
  *            // Do something else, still being awesome
  *        },
- *        ChannelAction.actOn(exitChan, exitMsg -> {
+ *        ChannelAction.actOn(exitChan, exitMsg -&#62; {
  *            Selector.BREAK_ACTION;
  *        });
  * </pre>

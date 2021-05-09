@@ -1,7 +1,5 @@
 codecov:
-  require_ci_to_pass: true
-  max_report_age: "24h"
-  # strict_yaml_branch: "develop"
+  require_ci_to_pass: yes
 
 coverage:
   precision: 1
@@ -16,10 +14,7 @@ parsers:
       method: no
       macro: no
 
-#ignore:
-#  - "**/*Exception.java"
-
 comment:
   layout: "reach,diff,flags,files,footer"
   behavior: default
-  require_changes: false
+  require_changes: no

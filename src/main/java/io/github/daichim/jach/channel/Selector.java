@@ -74,6 +74,7 @@ public class Selector implements AutoCloseable {
     private final Set<String> cleanupSet;
     private Map<String, ChannelAction> channelActions;
     private Channel<String> selectorChannel;
+
     @Getter
     private volatile boolean active;
 
@@ -98,16 +99,13 @@ public class Selector implements AutoCloseable {
         Selector selector = new Selector();
         selector.channelActions = new HashMap<>(actions.length);
         selector.selectorChannel = new BufferedChannel<>(CHAN_SIZE, String.class);
-        try {
-            for (ChannelAction ca : actions) {
-                Preconditions.checkNotNull(ca.getChannel());
-                Preconditions.checkNotNull(ca.getAction());
-                Preconditions.checkState(ca.getChannel().isOpen());
-                selector.channelActions.put(ca.getChannel().getId(), ca);
-                ca.getChannel().registerAfterWriteAction(selector.createAFW(ca));
-            }
-        } catch (IllegalStateException ex) {
-            throw new TooManySelectorException(ex.getMessage(), ex);
+
+        for (ChannelAction ca : actions) {
+            Preconditions.checkNotNull(ca.getChannel());
+            Preconditions.checkNotNull(ca.getAction());
+            Preconditions.checkState(ca.getChannel().isOpen());
+            selector.channelActions.put(ca.getChannel().getId(), ca);
+            ca.getChannel().registerAfterWriteAction(selector.createAFW(ca));
         }
         return selector;
     }

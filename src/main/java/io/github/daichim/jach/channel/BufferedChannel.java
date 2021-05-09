@@ -4,6 +4,7 @@ import com.google.common.base.Preconditions;
 import io.github.daichim.jach.exception.ClosedChannelException;
 import io.github.daichim.jach.exception.NoSuchChannelElementException;
 import io.github.daichim.jach.exception.TimeoutException;
+import io.github.daichim.jach.exception.TooManySelectorException;
 import io.github.daichim.jach.internal.AfterWriteAction;
 import io.github.daichim.jach.internal.ChannelIterator;
 import lombok.extern.slf4j.Slf4j;
@@ -321,6 +322,14 @@ public class BufferedChannel<T> implements Channel<T> {
                 thr.interrupt();
             });
         }
+
+        this.afterWriteActionList.forEach(afw -> {
+            try {
+                afw.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
         this.iterator.markDone();
     }
 
@@ -355,7 +364,7 @@ public class BufferedChannel<T> implements Channel<T> {
     @Override
     public void registerAfterWriteAction(AfterWriteAction afw) {
         if (this.afterWriteActionList.size() >= MAX_AFTER_WRITE_ACTIONS) {
-            throw new IllegalStateException(
+            throw new TooManySelectorException(
                 "Maximum number of AfterWriteActions registered on this channel");
         }
         this.afterWriteActionList.add(afw);

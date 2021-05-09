@@ -20,6 +20,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
@@ -212,7 +213,7 @@ public class BufferedChannelTest {
         for (int i = 0; i < CAPACITY; i++) {
             testChannel.write(LIFE_UNIVERSE_AND_EVERYTHING);
         }
-        Assert.assertFalse(testChannel.canWrite());
+        Assert.assertTrue(testChannel.canWrite());
         testChannel.close();
         Assert.assertFalse(testChannel.canWrite());
     }
@@ -221,9 +222,15 @@ public class BufferedChannelTest {
         description = "Test if the AfterWriteAction is invoked after blocking write")
     public void afterWriteActionsBlockingTest() throws Exception {
         AtomicInteger afwCount = new AtomicInteger(0);
-        AfterWriteAction action = () -> {
-            afwCount.incrementAndGet();
-            log.info("AfterWriteAction invoked - {}", afwCount.get());
+        AfterWriteAction action = new AfterWriteAction() {
+            @Override
+            public void onWrite() {
+                afwCount.incrementAndGet();
+                log.debug("AfterWriteAction invoked - {}", afwCount.get());
+            }
+
+            @Override
+            public void close() {}
         };
         testChannel.registerAfterWriteAction(action);
         Future<?> fut = threadPool.submit(() -> {
@@ -243,9 +250,15 @@ public class BufferedChannelTest {
         description = "Test if the AfterWriteAction is invoked after timing out write")
     public void afterWriteActionsTimeoutTest() throws Exception {
         AtomicInteger afwCount = new AtomicInteger(0);
-        AfterWriteAction action = () -> {
-            afwCount.incrementAndGet();
-            log.info("AfterWriteAction invoked - {}", afwCount.get());
+        AfterWriteAction action = new AfterWriteAction() {
+            @Override
+            public void onWrite() {
+                afwCount.incrementAndGet();
+                log.debug("AfterWriteAction invoked - {}", afwCount.get());
+            }
+
+            @Override
+            public void close() {}
         };
         testChannel.registerAfterWriteAction(action);
         Future<?> fut = threadPool.submit(() -> {
@@ -268,9 +281,15 @@ public class BufferedChannelTest {
         description = "Test if the AfterWriteAction is invoked after tryWrite")
     public void afterWriteActionsTryWriteTest() throws Exception {
         AtomicInteger afwCount = new AtomicInteger(0);
-        AfterWriteAction action = () -> {
-            afwCount.incrementAndGet();
-            log.info("AfterWriteAction invoked - {}", afwCount.get());
+        AfterWriteAction action = new AfterWriteAction() {
+            @Override
+            public void onWrite() {
+                afwCount.incrementAndGet();
+                log.debug("AfterWriteAction invoked - {}", afwCount.get());
+            }
+
+            @Override
+            public void close() {}
         };
         testChannel.registerAfterWriteAction(action);
         Future<?> fut = threadPool.submit(() -> {
@@ -422,7 +441,7 @@ public class BufferedChannelTest {
 
     @Test
     public void canReadTest() {
-        Assert.assertFalse(testChannel.canRead());
+        Assert.assertTrue(testChannel.canRead());
         for (int i = 0; i < CAPACITY; i++) {
             testChannel.write(LIFE_UNIVERSE_AND_EVERYTHING);
         }
@@ -493,6 +512,24 @@ public class BufferedChannelTest {
     public void isChannelClosedTest() throws Exception {
         testChannel.close();
         Assert.assertFalse(testChannel.isOpen());
+    }
+
+    @Test(groups = "channel_close", description = "Call AFW's close after channel is closed")
+    public void closeAfterWriteActionTest() throws Exception {
+
+        AtomicBoolean afwCloseCalled = new AtomicBoolean(false);
+        AfterWriteAction action = new AfterWriteAction() {
+            @Override
+            public void onWrite() {}
+
+            @Override
+            public void close() {
+               boolean set = afwCloseCalled.compareAndSet(false, true);
+            }
+        };
+        testChannel.registerAfterWriteAction(action);
+        testChannel.close();
+        Assert.assertTrue(afwCloseCalled.get());
     }
 
     @Test(groups = "channel_cap", description = "Check channel capacity")

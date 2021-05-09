@@ -8,6 +8,14 @@ coverage:
   round: down
   range: "70...100"
 
+parsers:
+  gcov:
+    branch_detection:
+      conditional: yes
+      loop: yes
+      method: no
+      macro: no
+
 #ignore:
 #  - "**/*Exception.java"
 

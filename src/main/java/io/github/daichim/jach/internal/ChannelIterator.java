@@ -1,6 +1,6 @@
 package io.github.daichim.jach.internal;
 
-import io.github.daichim.jach.BufferedChannel;
+import io.github.daichim.jach.channel.BufferedChannel;
 import io.github.daichim.jach.exception.ClosedChannelException;
 import io.github.daichim.jach.exception.NoSuchChannelElementException;
 

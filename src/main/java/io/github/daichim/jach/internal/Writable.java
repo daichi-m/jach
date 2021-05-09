@@ -11,7 +11,7 @@ import java.util.concurrent.TimeoutException;
  *
  * @param <T> The type of data that this interface can write.
  */
-public interface Writable<T> {
+public interface Writable<T> extends AutoCloseable {
 
     /**
      * Writes the given message to the destination. If the destination does not have space, the
@@ -46,13 +46,11 @@ public interface Writable<T> {
     boolean tryWrite(T message);
 
     /**
-     * Returns {@literal true} if the destination is not closed and has space to write messages. It
-     * does not guarantee that the next write will succeed, since another thread might have written
-     * a new message in between the time the caller checks this method and invokes the {@link
-     * #write(Object)} call.
+     * The destination allows write to happen. It does not necessarily means the write will succeed,
+     * it can block or timeout if there is no space, but if space is made available, the write will
+     * eventually succeed.
      *
-     * @return If the destination is not closed and have space to write a message returns {@literal
-     *     true}, otherwise returns {@literal false}.
+     * @return {@literal true} if the destination can be written to, {@literal false} otherwise.
      */
     boolean canWrite();
 

@@ -27,7 +27,7 @@ public class ChannelAction<T> {
      * @return The new {@link ChannelAction} object for this {@link Channel} and {@link Consumer}
      *     combination.
      */
-    public static <T> ChannelAction<T> actOn(Channel<T> channel, Consumer<T> action) {
+    public static <T> ChannelAction<T> action(Channel<T> channel, Consumer<T> action) {
         return new ChannelAction<>(channel, action);
     }
 }

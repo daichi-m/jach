@@ -178,9 +178,14 @@ public class BufferedChannel<T> implements Channel<T> {
         }
     }
 
+    /**
+     * Returns {@literal true} if the channel can be written to.
+     *
+     * @return {@literal true} if the channel can be written to, else {@literal false}.
+     */
     @Override
     public boolean canWrite() {
-        return isOpen() && internalQueue.size() < capacity;
+        return isOpen();
     }
 
     private void runAfterWriteActions() {
@@ -244,15 +249,13 @@ public class BufferedChannel<T> implements Channel<T> {
     }
 
     /**
-     * Returns {@literal true} if the channel can be read. It does not guarantee that the next
-     * {@link #read()} call will succeed, since another thread might have read the data between the
-     * invocation of this method and a corresponding read.
+     * Returns {@literal true} if the channel can be read.
      *
      * @return {@literal true} if the channel can be read, else {@literal false}.
      */
     @Override
     public boolean canRead() {
-        return !internalQueue.isEmpty();
+        return isOpen() || !internalQueue.isEmpty();
     }
 
     private T blockedRead(Optional<Integer> timeout, Optional<TimeUnit> unit)

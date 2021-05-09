@@ -11,7 +11,7 @@ import java.util.concurrent.TimeoutException;
  * @param <T> The type of data that this interface can read.
  */
 
-public interface Readable<T> {
+public interface Readable<T> extends AutoCloseable {
 
     /**
      * Reads the next message from the source. If there are no elements in the source, the read
@@ -48,12 +48,10 @@ public interface Readable<T> {
     T tryRead();
 
     /**
-     * Return {@literal true} if there are elements in the source that can be read. It does not
-     * guarantee that the next read will succeed, since another thread might be able to read the
-     * data between the time the caller checks this and invokes the {@link #read()} call.
+     * The source can be read from. It does not necessarily means the read will succeed as it can
+     * get blocked or timeout, but it means that the source still allows reads to happen.
      *
-     * @return {@literal true} If there are elements in the source that can be read, {@literal
-     *     false} otherwise.
+     * @return {@literal true} if the source can be read from, {@literal false} otherwise.
      */
     boolean canRead();
 

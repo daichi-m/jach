@@ -29,7 +29,7 @@ import java.util.Spliterator;
  *
  * @param <T> The type of the message which the {@link Channel} holds.
  */
-public interface Channel<T> extends Writable<T>, Readable<T>, AutoCloseable, Iterable<T> {
+public interface Channel<T> extends Writable<T>, Readable<T>, Iterable<T> {
 
     /**
      * Closes the channel. Read and write operation on a closed channel would throw a {@link

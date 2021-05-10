@@ -13,7 +13,7 @@ import io.github.daichim.jach.channel.copier.KryoCopier;
 public class UnbufferedChannel<T> extends BufferedChannel<T> {
 
     public UnbufferedChannel(Class<T> clazz) {
-        super(1, clazz, new KryoCopier<>());
+        super(1, clazz, new KryoCopier<>(clazz));
     }
 
     public UnbufferedChannel(Class<T> clazz, Copier<T> copier) {

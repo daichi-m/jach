@@ -1,7 +1,11 @@
-package io.github.daichim.jach.channel;
+package io.github.daichim.jach.channel.selector;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import io.github.daichim.jach.channel.Action;
+import io.github.daichim.jach.channel.BufferedChannel;
+import io.github.daichim.jach.channel.Channel;
+import io.github.daichim.jach.channel.copier.RefCopier;
 import io.github.daichim.jach.exception.ClosedChannelException;
 import io.github.daichim.jach.exception.NoSuchChannelElementException;
 import io.github.daichim.jach.exception.TooManySelectorException;
@@ -98,7 +102,8 @@ public class Selector implements AutoCloseable {
 
         Selector selector = new Selector();
         selector.channelActions = new HashMap<>(actions.length);
-        selector.selectorChannel = new BufferedChannel<>(CHAN_SIZE, String.class);
+        selector.selectorChannel =
+            new BufferedChannel<>(CHAN_SIZE, String.class, new RefCopier<>());
 
         for (ChannelAction ca : actions) {
             Preconditions.checkNotNull(ca.getChannel());

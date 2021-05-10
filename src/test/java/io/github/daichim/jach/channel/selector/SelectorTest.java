@@ -1,11 +1,10 @@
-package io.github.daichim.jach.channel;
+package io.github.daichim.jach.channel.selector;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import io.github.daichim.jach.channel.BufferedChannel;
 import io.github.daichim.jach.channel.Channel;
-import io.github.daichim.jach.channel.ChannelAction;
-import io.github.daichim.jach.channel.Selector;
 import io.github.daichim.jach.channel.UnbufferedChannel;
+import io.github.daichim.jach.channel.copier.RefCopier;
 import lombok.extern.slf4j.Slf4j;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
@@ -18,13 +17,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
-
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
 
 @Slf4j
 @SuppressWarnings({"rawtypes", "unchecked"})
@@ -39,10 +33,10 @@ public class SelectorTest {
     }
 
     private Channel[] createChannels() {
-        Channel<String> strChannel = new BufferedChannel<>(5, String.class);
-        Channel<Integer> intChannel = new BufferedChannel<>(5, Integer.class);
+        Channel<String> strChannel = new BufferedChannel<>(5, String.class, new RefCopier<>());
+        Channel<Integer> intChannel = new BufferedChannel<>(5, Integer.class, new RefCopier<>());
         Channel<Object> exitChannel = new UnbufferedChannel<>(Object.class);
-        return new Channel[] {strChannel, intChannel, exitChannel};
+        return new Channel[]{strChannel, intChannel, exitChannel};
     }
 
     @Test(timeOut = 2000)
@@ -58,7 +52,7 @@ public class SelectorTest {
                 expectedChannel.compareAndSet("chan1", "chan2");
                 counter.incrementAndGet();
             }),
-            ChannelAction.action(chans[1], i->{
+            ChannelAction.action(chans[1], i -> {
                 log.debug("Channel2 read in {}", i);
                 Assert.assertEquals(i, 42);
                 Assert.assertEquals(expectedChannel.get(), "chan2");
@@ -68,21 +62,21 @@ public class SelectorTest {
             ChannelAction.action(chans[2], Selector.BREAK_ACTION)
         );
         threadPool.submit(() -> {
-            for (int i=0; i<10; i++) {
-                if (i%2==0) {
+            for (int i = 0; i < 10; i++) {
+                if (i % 2 == 0) {
                     chans[0].write("Hello");
                 } else {
                     chans[1].write(42);
                 }
             }
         });
-        for (int i=0; i<10; i++) {
+        for (int i = 0; i < 10; i++) {
             sel.select();
         }
         Assert.assertEquals(counter.get(), 10);
         Arrays.stream(chans).forEach(ch -> ch.close());
         TimeUnit.MILLISECONDS.sleep(200);
-        for (int i=0; i<chans.length; i++) {
+        for (int i = 0; i < chans.length; i++) {
             sel.select();
         }
         Assert.assertFalse(sel.isActive());
@@ -98,7 +92,7 @@ public class SelectorTest {
                 Assert.assertEquals(s, "Hello");
                 counter.incrementAndGet();
             }),
-            ChannelAction.action(chans[1], i->{
+            ChannelAction.action(chans[1], i -> {
                 log.debug("Channel2 read in {}", i);
                 Assert.assertEquals(i, 42);
                 counter.incrementAndGet();
@@ -106,8 +100,8 @@ public class SelectorTest {
             ChannelAction.action(chans[2], Selector.BREAK_ACTION)
         );
         threadPool.submit(() -> {
-            for (int i=0; i<10; i++) {
-                if (i%2==0) {
+            for (int i = 0; i < 10; i++) {
+                if (i % 2 == 0) {
                     chans[0].write("Hello");
                 } else {
                     chans[1].write(42);
@@ -115,17 +109,17 @@ public class SelectorTest {
             }
         });
         Future<?>[] futures = new Future[10];
-        for (int i=0; i<10; i++) {
+        for (int i = 0; i < 10; i++) {
             futures[i] = threadPool.submit(sel::select);
         }
 
-        for (int i=0; i<10; i++) {
+        for (int i = 0; i < 10; i++) {
             futures[i].get(1, TimeUnit.SECONDS);
         }
         Assert.assertEquals(counter.get(), 10);
         Arrays.stream(chans).forEach(ch -> ch.close());
         TimeUnit.MILLISECONDS.sleep(200);
-        for (int i=0; i<chans.length; i++) {
+        for (int i = 0; i < chans.length; i++) {
             sel.select();
         }
         Assert.assertFalse(sel.isActive());
@@ -133,7 +127,7 @@ public class SelectorTest {
 
     @Test(expectedExceptions = IllegalStateException.class)
     public void selectAfterCloseTest() {
-        Channel<String> chan = new BufferedChannel<>(10, String.class);
+        Channel<String> chan = new BufferedChannel<>(10, String.class, new RefCopier<>());
         Selector selector = Selector.of(ChannelAction.action(chan, s -> {}));
         selector.close();
         selector.select();
@@ -149,7 +143,7 @@ public class SelectorTest {
                 Assert.assertEquals(s, "Universe");
                 counter.incrementAndGet();
             }),
-            ChannelAction.action(chans[1], i->{
+            ChannelAction.action(chans[1], i -> {
                 log.debug("Channel2 read in {}", i);
                 Assert.assertEquals(i, 42);
                 counter.incrementAndGet();
@@ -157,7 +151,7 @@ public class SelectorTest {
             ChannelAction.action(chans[2], Selector.BREAK_ACTION)
         );
         threadPool.submit(() -> {
-            for (int i=0; i<100; i++) {
+            for (int i = 0; i < 100; i++) {
                 boolean c = ThreadLocalRandom.current().nextBoolean();
                 if (c) {
                     chans[0].write("Universe");
@@ -182,7 +176,7 @@ public class SelectorTest {
                 Assert.assertEquals(s, "Universe");
                 counter.incrementAndGet();
             }),
-            ChannelAction.action(chans[1], i->{
+            ChannelAction.action(chans[1], i -> {
                 log.debug("Channel2 read in {}", i);
                 Assert.assertEquals(i, 42);
                 counter.incrementAndGet();
@@ -190,7 +184,7 @@ public class SelectorTest {
             ChannelAction.action(chans[2], Selector.BREAK_ACTION)
         );
         threadPool.submit(() -> {
-            for (int i=0; i<100; i++) {
+            for (int i = 0; i < 100; i++) {
                 boolean c = ThreadLocalRandom.current().nextBoolean();
                 if (c) {
                     chans[0].write("Universe");
@@ -201,7 +195,7 @@ public class SelectorTest {
             chans[2].write("EXIT");
         });
         Future<?>[] futs = new Future[5];
-        for (int i=0; i<5; i++) {
+        for (int i = 0; i < 5; i++) {
             futs[i] = threadPool.submit(() -> sel.untilDone());
         }
         // sel.untilDone();
@@ -225,7 +219,7 @@ public class SelectorTest {
                 Assert.assertEquals(s, "Universe");
                 counter.incrementAndGet();
             }),
-            ChannelAction.action(chans[1], i->{
+            ChannelAction.action(chans[1], i -> {
                 log.debug("Channel2 read in {}", i);
                 Assert.assertEquals(i, 42);
                 counter.incrementAndGet();
@@ -233,7 +227,7 @@ public class SelectorTest {
             ChannelAction.action(chans[2], Selector.BREAK_ACTION)
         );
         threadPool.submit(() -> {
-            for (int i=0; i<100; i++) {
+            for (int i = 0; i < 100; i++) {
                 boolean c = ThreadLocalRandom.current().nextBoolean();
                 if (c) {
                     chans[0].write("Universe");
@@ -242,7 +236,8 @@ public class SelectorTest {
                 }
                 try {
                     TimeUnit.MILLISECONDS.sleep(10);
-                } catch (InterruptedException ignored) { }
+                } catch (InterruptedException ignored) {
+                }
             }
             chans[2].write("EXIT");
         });
@@ -251,7 +246,8 @@ public class SelectorTest {
             defaultCalled.incrementAndGet();
             try {
                 TimeUnit.MILLISECONDS.sleep(50);
-            } catch (InterruptedException e) { }
+            } catch (InterruptedException e) {
+            }
         });
         Assert.assertEquals(counter.get(), 100);
         Assert.assertFalse(sel.isActive());

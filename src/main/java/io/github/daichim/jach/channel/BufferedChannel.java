@@ -1,7 +1,9 @@
 package io.github.daichim.jach.channel;
 
 import com.google.common.base.Preconditions;
+import io.github.daichim.jach.channel.copier.Copier;
 import io.github.daichim.jach.exception.ClosedChannelException;
+import io.github.daichim.jach.exception.CopyException;
 import io.github.daichim.jach.exception.NoSuchChannelElementException;
 import io.github.daichim.jach.exception.TimeoutException;
 import io.github.daichim.jach.exception.TooManySelectorException;
@@ -61,6 +63,7 @@ public class BufferedChannel<T> implements Channel<T> {
     private final BlockingQueue<T> internalQueue;
     private final int capacity;
     private final Class<T> clazz;
+    private final Copier<T> copier;
     private final String channelId;
     private final Map<Long, Thread> blockedWriters;
     private final Map<Long, Thread> blockedReaders;
@@ -71,9 +74,10 @@ public class BufferedChannel<T> implements Channel<T> {
     private volatile boolean open;
 
 
-    public BufferedChannel(int capacity, Class<T> clazz) {
+    public BufferedChannel(int capacity, Class<T> clazz, Copier<T> copier) {
         this.clazz = clazz;
         this.capacity = capacity;
+        this.copier = copier;
         this.internalQueue = new ArrayBlockingQueue<>(capacity, true);
         this.channelId = UUID.randomUUID().toString();
         this.open = true;
@@ -130,14 +134,16 @@ public class BufferedChannel<T> implements Channel<T> {
      * @return {@literal true} if the write succeeds, {@literal false} otherwise.
      *
      * @throws ClosedChannelException If the channel has already been closed for writing.
+     * @throws CopyException If the {@link Copier} associated with the channel fails.
      */
     @Override
-    public boolean tryWrite(T message) {
+    public boolean tryWrite(T message) throws ClosedChannelException, CopyException {
         Preconditions.checkNotNull(message);
         if (!open) {
             throw new ClosedChannelException("Channel is already closed for writing");
         }
-        boolean success = internalQueue.offer(message);
+        T messageCopy = this.copier.copyOf(message);
+        boolean success = internalQueue.offer(messageCopy);
         if (success) {
             runAfterWriteActions();
         }
@@ -146,11 +152,12 @@ public class BufferedChannel<T> implements Channel<T> {
 
 
     private void blockedWrite(T message, Optional<Integer> timeout, Optional<TimeUnit> unit)
-        throws TimeoutException {
+        throws TimeoutException, CopyException {
         Preconditions.checkNotNull(message);
         if (!open) {
             throw new ClosedChannelException("Channel is already closed for writing");
         }
+        T messageCopy = this.copier.copyOf(message);
 
         Thread currThread = Thread.currentThread();
         try {

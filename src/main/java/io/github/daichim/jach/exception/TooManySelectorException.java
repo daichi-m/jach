@@ -1,7 +1,7 @@
 package io.github.daichim.jach.exception;
 
 import io.github.daichim.jach.channel.Channel;
-import io.github.daichim.jach.channel.Selector;
+import io.github.daichim.jach.channel.selector.Selector;
 
 /**
  * {@link TooManySelectorException} is thrown when a particular {@link

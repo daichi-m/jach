@@ -1,6 +1,7 @@
 package io.github.daichim.jach.channel;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import io.github.daichim.jach.channel.copier.RefCopier;
 import io.github.daichim.jach.exception.ClosedChannelException;
 import io.github.daichim.jach.exception.NoSuchChannelElementException;
 import io.github.daichim.jach.internal.AfterWriteAction;
@@ -12,6 +13,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.sql.Ref;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -44,7 +46,7 @@ public class BufferedChannelTest {
 
     @BeforeMethod
     public void initializeChannelForWrite() {
-        this.testChannel = new BufferedChannel<>(CAPACITY, Integer.class);
+        this.testChannel = new BufferedChannel<>(CAPACITY, Integer.class, new RefCopier<>());
         log.debug("Channel initialized");
     }
 
@@ -53,7 +55,7 @@ public class BufferedChannelTest {
     @Test(groups = "channel_write", description = "Successfully write messages to channel")
     public void writeTestSuccess() throws Exception {
         try (BufferedChannel<Integer> testChannel =
-                 new BufferedChannel<>(CAPACITY, Integer.class)) {
+                 new BufferedChannel<>(CAPACITY, Integer.class, new RefCopier<>())) {
 
             Future<?> fut = threadPool.submit(() -> {
                 for (int i = 0; i < CAPACITY; i++) {
@@ -71,7 +73,7 @@ public class BufferedChannelTest {
         description = "Blocks writing to channel due to buffer full")
     public void writeTestBlocks() throws Exception {
         try (BufferedChannel<Integer> testChannel =
-                 new BufferedChannel<>(CAPACITY, Integer.class)) {
+                 new BufferedChannel<>(CAPACITY, Integer.class, new RefCopier<>())) {
             Future<?> fut = threadPool.submit(() -> {
                 for (int i = 0; i < CAPACITY + 1; i++) {
                     testChannel.write(LIFE_UNIVERSE_AND_EVERYTHING);
@@ -89,7 +91,7 @@ public class BufferedChannelTest {
             + "but then unblocked due to a subsequent read")
     public void writeTestBlocksAndUnblocks() throws Exception {
         try (BufferedChannel<Integer> testChannel =
-                 new BufferedChannel<>(CAPACITY, Integer.class)) {
+                 new BufferedChannel<>(CAPACITY, Integer.class, new RefCopier<>())) {
             Future<?> fut = threadPool.submit(() -> {
                 for (int i = 0; i < CAPACITY + 1; i++) {
                     testChannel.write(LIFE_UNIVERSE_AND_EVERYTHING);
@@ -117,7 +119,7 @@ public class BufferedChannelTest {
         description = "Times out writing data to channel")
     public void writeTestTimesOut() throws Throwable {
         try (BufferedChannel<Integer> testChannel =
-                 new BufferedChannel<>(CAPACITY, Integer.class)) {
+                 new BufferedChannel<>(CAPACITY, Integer.class, new RefCopier<>())) {
             Future<?> fut = threadPool.submit(() -> {
                 for (int i = 0; i < CAPACITY + 5; i++) {
                     testChannel.write(LIFE_UNIVERSE_AND_EVERYTHING, 100, TimeUnit.MILLISECONDS);
@@ -138,7 +140,7 @@ public class BufferedChannelTest {
     @Test(groups = "channel_write", description = "Try writing and succeed")
     public void tryWriteSuccess() throws Throwable {
         try (BufferedChannel<Integer> testChannel =
-                 new BufferedChannel<>(CAPACITY, Integer.class)) {
+                 new BufferedChannel<>(CAPACITY, Integer.class, new RefCopier<>())) {
             Future<?> fut = threadPool.submit(() -> {
                 for (int i = 0; i < CAPACITY; i++) {
                     boolean res = testChannel.tryWrite(LIFE_UNIVERSE_AND_EVERYTHING);
@@ -158,7 +160,7 @@ public class BufferedChannelTest {
     @Test(groups = "channel_write", description = "Try writing, succeed and then fails")
     public void tryWriteFails() throws Throwable {
         try (BufferedChannel<Integer> testChannel =
-                 new BufferedChannel<>(CAPACITY, Integer.class)) {
+                 new BufferedChannel<>(CAPACITY, Integer.class, new RefCopier<>())) {
             Future<?> fut = threadPool.submit(() -> {
                 for (int i = 0; i < CAPACITY + 5; i++) {
                     boolean res = testChannel.tryWrite(LIFE_UNIVERSE_AND_EVERYTHING);
@@ -184,7 +186,7 @@ public class BufferedChannelTest {
     public void writeToClosedChannel() throws Exception {
         Future<?> fut = null;
         try (BufferedChannel<Integer> testChannel =
-                 new BufferedChannel<>(CAPACITY, Integer.class)) {
+                 new BufferedChannel<>(CAPACITY, Integer.class, new RefCopier<>())) {
             fut = threadPool.submit(() -> {
                 for (int i = 0; i < CAPACITY + 1; i++) {
                     testChannel.write(LIFE_UNIVERSE_AND_EVERYTHING);
@@ -419,7 +421,7 @@ public class BufferedChannelTest {
     @Test(groups = "channel_read", description = "Read from a close channel",
         expectedExceptions = NoSuchChannelElementException.class)
     public void readTestClosedChannel() throws Exception {
-        testChannel = new BufferedChannel<>(CAPACITY, Integer.class);
+        testChannel = new BufferedChannel<>(CAPACITY, Integer.class, new RefCopier<>());
         Future<?> fut = threadPool.submit(() -> {
             int msg = testChannel.read();
             Assert.fail("Read in without blocking");
@@ -435,7 +437,7 @@ public class BufferedChannelTest {
     @Test(groups = "channel_read", description = "Read from a close channel",
         expectedExceptions = NoSuchChannelElementException.class)
     public void readTestClosedChannel2() throws Exception {
-        testChannel = new BufferedChannel<>(CAPACITY, Integer.class);
+        testChannel = new BufferedChannel<>(CAPACITY, Integer.class, new RefCopier<>());
         testChannel.close();
         testChannel.read();
     }

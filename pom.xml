@@ -52,6 +52,7 @@
         <guava.version>29.0-jre</guava.version>
         <lombok.version>1.18.20</lombok.version>
         <slf4j.version>1.7.30</slf4j.version>
+        <kryo.version>5.1.1</kryo.version>
         <testng.version>7.4.0</testng.version>
         <mockito.version>3.9.0</mockito.version>
         <cucumber-jvm.version>6.8.1</cucumber-jvm.version>
@@ -83,6 +84,11 @@
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.esotericsoftware.kryo</groupId>
+            <artifactId>kryo5</artifactId>
+            <version>${kryo.version}</version>
         </dependency>
 
         <!-- Testing scope -->

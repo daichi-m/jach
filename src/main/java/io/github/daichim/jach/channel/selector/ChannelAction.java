@@ -1,5 +1,6 @@
-package io.github.daichim.jach.channel;
+package io.github.daichim.jach.channel.selector;
 
+import io.github.daichim.jach.channel.Channel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 

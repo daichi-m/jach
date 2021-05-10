@@ -1,5 +1,4 @@
 codecov:
-  max_report_age: "24h"
   require_ci_to_pass: yes
 
 coverage:
@@ -14,10 +13,6 @@ parsers:
       loop: yes
       method: no
       macro: no
-
-#ignore:
-#  - "**/*Exception.java"
-
 
 comment:
   layout: "reach,diff,flags,files,footer"

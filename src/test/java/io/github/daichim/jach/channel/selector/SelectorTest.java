@@ -20,6 +20,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static io.github.daichim.jach.JachChannels.selectCase;
+import static io.github.daichim.jach.JachChannels.selector;
+
 @Slf4j
 @SuppressWarnings({"rawtypes", "unchecked"})
 public class SelectorTest {
@@ -44,22 +47,22 @@ public class SelectorTest {
         Channel[] chans = createChannels();
         AtomicReference<String> expectedChannel = new AtomicReference<>("chan1");
         AtomicInteger counter = new AtomicInteger(0);
-        Selector sel = Selector.of(
-            ChannelAction.action(chans[0], s -> {
+        Selector sel = selector(
+            selectCase(chans[0], s -> {
                 log.debug("Channel1 read in {}", s);
                 Assert.assertEquals(s, "Hello");
                 Assert.assertEquals(expectedChannel.get(), "chan1");
                 expectedChannel.compareAndSet("chan1", "chan2");
                 counter.incrementAndGet();
             }),
-            ChannelAction.action(chans[1], i -> {
+            selectCase(chans[1], i -> {
                 log.debug("Channel2 read in {}", i);
                 Assert.assertEquals(i, 42);
                 Assert.assertEquals(expectedChannel.get(), "chan2");
                 expectedChannel.compareAndSet("chan2", "chan1");
                 counter.incrementAndGet();
             }),
-            ChannelAction.action(chans[2], Selector.BREAK_ACTION)
+            selectCase(chans[2], Selector.BREAK_ACTION)
         );
         threadPool.submit(() -> {
             for (int i = 0; i < 10; i++) {
@@ -86,18 +89,18 @@ public class SelectorTest {
     public void multiThreadSelectTest() throws Exception {
         Channel[] chans = createChannels();
         AtomicInteger counter = new AtomicInteger(0);
-        Selector sel = Selector.of(
-            ChannelAction.action(chans[0], s -> {
+        Selector sel = selector(
+            selectCase(chans[0], s -> {
                 log.debug("Channel1 read in {}", s);
                 Assert.assertEquals(s, "Hello");
                 counter.incrementAndGet();
             }),
-            ChannelAction.action(chans[1], i -> {
+            selectCase(chans[1], i -> {
                 log.debug("Channel2 read in {}", i);
                 Assert.assertEquals(i, 42);
                 counter.incrementAndGet();
             }),
-            ChannelAction.action(chans[2], Selector.BREAK_ACTION)
+            selectCase(chans[2], Selector.BREAK_ACTION)
         );
         threadPool.submit(() -> {
             for (int i = 0; i < 10; i++) {
@@ -107,6 +110,7 @@ public class SelectorTest {
                     chans[1].write(42);
                 }
             }
+            chans[2].write(new Object());
         });
         Future<?>[] futures = new Future[10];
         for (int i = 0; i < 10; i++) {
@@ -128,27 +132,51 @@ public class SelectorTest {
     @Test(expectedExceptions = IllegalStateException.class)
     public void selectAfterCloseTest() {
         Channel<String> chan = new BufferedChannel<>(10, String.class, new RefCopier<>());
-        Selector selector = Selector.of(ChannelAction.action(chan, s -> {}));
+        Selector selector = selector(selectCase(chan, s -> {}));
         selector.close();
         selector.select();
+    }
+
+    @Test(timeOut = 10_000)
+    public void selectorOverflowTest() throws Exception {
+        Channel<String> bigChannel = new BufferedChannel<>(10*1024, String.class, new RefCopier<>());
+        Channel<Object> exitChannel = new UnbufferedChannel<>(Object.class, new RefCopier<>());
+        AtomicInteger counter = new AtomicInteger(0);
+        Selector sel = selector(
+            selectCase(bigChannel, s -> {
+                log.debug("Channel1 read in {}", s);
+                Assert.assertEquals(s, "Hello");
+                counter.incrementAndGet();
+            }),
+            selectCase(exitChannel, Selector.BREAK_ACTION)
+        );
+        Future<?> fut = threadPool.submit(() -> {
+            for (int i = 0; i < 8192; i++) {
+                bigChannel.write("Hello");
+            }
+            exitChannel.write(new Object());
+        });
+        fut.get();
+        sel.untilDone();
+        Assert.assertEquals(counter.get(), 2047);
     }
 
     @Test
     public void untilDoneTest() {
         Channel[] chans = createChannels();
         AtomicInteger counter = new AtomicInteger(0);
-        Selector sel = Selector.of(
-            ChannelAction.action(chans[0], s -> {
+        Selector sel = selector(
+            selectCase(chans[0], s -> {
                 log.debug("Channel1 read in {}", s);
                 Assert.assertEquals(s, "Universe");
                 counter.incrementAndGet();
             }),
-            ChannelAction.action(chans[1], i -> {
+            selectCase(chans[1], i -> {
                 log.debug("Channel2 read in {}", i);
                 Assert.assertEquals(i, 42);
                 counter.incrementAndGet();
             }),
-            ChannelAction.action(chans[2], Selector.BREAK_ACTION)
+            selectCase(chans[2], Selector.BREAK_ACTION)
         );
         threadPool.submit(() -> {
             for (int i = 0; i < 100; i++) {
@@ -166,22 +194,23 @@ public class SelectorTest {
         Assert.assertFalse(sel.isActive());
     }
 
-    @Test(enabled = false)
-    public void untilDoneMultiThreadTest() throws Exception {
+
+    @Test
+    public void untilDoneCloseChannelsTest() {
         Channel[] chans = createChannels();
         AtomicInteger counter = new AtomicInteger(0);
-        Selector sel = Selector.of(
-            ChannelAction.action(chans[0], s -> {
+        Selector sel = selector(
+            selectCase(chans[0], s -> {
                 log.debug("Channel1 read in {}", s);
                 Assert.assertEquals(s, "Universe");
                 counter.incrementAndGet();
             }),
-            ChannelAction.action(chans[1], i -> {
+            selectCase(chans[1], i -> {
                 log.debug("Channel2 read in {}", i);
                 Assert.assertEquals(i, 42);
                 counter.incrementAndGet();
             }),
-            ChannelAction.action(chans[2], Selector.BREAK_ACTION)
+            selectCase(chans[2], Selector.BREAK_ACTION)
         );
         threadPool.submit(() -> {
             for (int i = 0; i < 100; i++) {
@@ -192,17 +221,11 @@ public class SelectorTest {
                     chans[1].write(42);
                 }
             }
-            chans[2].write("EXIT");
+            chans[0].close();
+            chans[1].close();
+            chans[2].close();
         });
-        Future<?>[] futs = new Future[5];
-        for (int i = 0; i < 5; i++) {
-            futs[i] = threadPool.submit(() -> sel.untilDone());
-        }
-        // sel.untilDone();
-        for (Future<?> f : futs) {
-            f.get(1, TimeUnit.SECONDS);
-        }
-        Arrays.stream(futs).forEach(f -> Assert.assertTrue(f.isDone()));
+        sel.untilDone();
         Assert.assertEquals(counter.get(), 100);
         Assert.assertFalse(sel.isActive());
     }
@@ -213,18 +236,18 @@ public class SelectorTest {
         Channel[] chans = createChannels();
         AtomicInteger counter = new AtomicInteger(0);
         AtomicInteger defaultCalled = new AtomicInteger(0);
-        Selector sel = Selector.of(
-            ChannelAction.action(chans[0], s -> {
+        Selector sel = selector(
+            selectCase(chans[0], s -> {
                 log.debug("Channel1 read in {}", s);
                 Assert.assertEquals(s, "Universe");
                 counter.incrementAndGet();
             }),
-            ChannelAction.action(chans[1], i -> {
+            selectCase(chans[1], i -> {
                 log.debug("Channel2 read in {}", i);
                 Assert.assertEquals(i, 42);
                 counter.incrementAndGet();
             }),
-            ChannelAction.action(chans[2], Selector.BREAK_ACTION)
+            selectCase(chans[2], Selector.BREAK_ACTION)
         );
         threadPool.submit(() -> {
             for (int i = 0; i < 100; i++) {
@@ -240,6 +263,56 @@ public class SelectorTest {
                 }
             }
             chans[2].write("EXIT");
+        });
+        sel.untilOrDefault(() -> {
+            log.debug("Default action invoked");
+            defaultCalled.incrementAndGet();
+            try {
+                TimeUnit.MILLISECONDS.sleep(50);
+            } catch (InterruptedException e) {
+            }
+        });
+        Assert.assertEquals(counter.get(), 100);
+        Assert.assertFalse(sel.isActive());
+        Assert.assertTrue(defaultCalled.get() >= 20);
+    }
+
+
+    @Test
+    public void untilDoneOrDefaultCloseChannelsTest() {
+
+        Channel[] chans = createChannels();
+        AtomicInteger counter = new AtomicInteger(0);
+        AtomicInteger defaultCalled = new AtomicInteger(0);
+        Selector sel = selector(
+            selectCase(chans[0], s -> {
+                log.debug("Channel1 read in {}", s);
+                Assert.assertEquals(s, "Universe");
+                counter.incrementAndGet();
+            }),
+            selectCase(chans[1], i -> {
+                log.debug("Channel2 read in {}", i);
+                Assert.assertEquals(i, 42);
+                counter.incrementAndGet();
+            }),
+            selectCase(chans[2], Selector.BREAK_ACTION)
+        );
+        threadPool.submit(() -> {
+            for (int i = 0; i < 100; i++) {
+                boolean c = ThreadLocalRandom.current().nextBoolean();
+                if (c) {
+                    chans[0].write("Universe");
+                } else {
+                    chans[1].write(42);
+                }
+                try {
+                    TimeUnit.MILLISECONDS.sleep(10);
+                } catch (InterruptedException ignored) {
+                }
+            }
+            chans[0].close();
+            chans[1].close();
+            chans[2].close();
         });
         sel.untilOrDefault(() -> {
             log.debug("Default action invoked");

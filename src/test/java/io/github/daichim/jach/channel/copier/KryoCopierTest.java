@@ -15,11 +15,11 @@ public class KryoCopierTest {
         Double pi = 3.14159;
         TestPojo pojo = new TestPojo("Hello", 42);
 
-        String strCopy = new KryoCopier<String>().copyOf(str);
-        Integer valCopy = new KryoCopier<Integer>().copyOf(val);
-        Long lvalCopy = new KryoCopier<Long>().copyOf(lval);
-        Double piCopy = new KryoCopier<Double>().copyOf(pi);
-        TestPojo pojoCopy = new KryoCopier<TestPojo>().copyOf(pojo);
+        String strCopy = new KryoCopier<String>(String.class).copyOf(str);
+        Integer valCopy = new KryoCopier<Integer>(Integer.class).copyOf(val);
+        Long lvalCopy = new KryoCopier<Long>(Long.class).copyOf(lval);
+        Double piCopy = new KryoCopier<Double>(Double.class).copyOf(pi);
+        TestPojo pojoCopy = new KryoCopier<TestPojo>(TestPojo.class).copyOf(pojo);
 
 
         Assert.assertEquals(str, strCopy);

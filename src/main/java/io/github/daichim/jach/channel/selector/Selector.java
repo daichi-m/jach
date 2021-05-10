@@ -83,9 +83,12 @@ public class Selector implements AutoCloseable {
     private volatile boolean active;
 
     @VisibleForTesting
-    Selector() {
+    public Selector() {
         this.backfillQueue = new LinkedBlockingQueue<>();
         this.cleanupSet = Collections.synchronizedSet(new HashSet<String>());
+        this.channelActions = new HashMap<>();
+        this.selectorChannel =
+            new BufferedChannel<>(CHAN_SIZE, String.class, new RefCopier<>());
         this.active = true;
     }
 
@@ -101,10 +104,6 @@ public class Selector implements AutoCloseable {
         throws TooManySelectorException, NullPointerException {
 
         Selector selector = new Selector();
-        selector.channelActions = new HashMap<>(actions.length);
-        selector.selectorChannel =
-            new BufferedChannel<>(CHAN_SIZE, String.class, new RefCopier<>());
-
         for (ChannelAction ca : actions) {
             Preconditions.checkNotNull(ca.getChannel());
             Preconditions.checkNotNull(ca.getAction());

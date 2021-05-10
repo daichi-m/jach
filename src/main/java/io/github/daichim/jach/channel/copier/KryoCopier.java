@@ -4,6 +4,7 @@ import com.esotericsoftware.kryo.kryo5.Kryo;
 import com.esotericsoftware.kryo.kryo5.KryoException;
 import com.esotericsoftware.kryo.kryo5.Serializer;
 import io.github.daichim.jach.exception.CopyException;
+import lombok.Getter;
 
 /**
  * {@link KryoCopier} uses Kryo serializer to do a deep copy of the object. For more information
@@ -12,14 +13,16 @@ import io.github.daichim.jach.exception.CopyException;
  */
 public class KryoCopier<T> implements Copier<T> {
 
+    @Getter
     private final Kryo kryo;
     private final Serializer<T> serializer;
 
     /**
      * Initializes a {@link KryoCopier} with default instance of Kryo and Serializer.
      */
-    public KryoCopier() {
+    public KryoCopier(Class<T> clazz) {
         this.kryo = new Kryo();
+        this.kryo.register(clazz);
         this.serializer = null;
         this.kryo.setRegistrationRequired(false);
     }

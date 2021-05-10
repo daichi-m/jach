@@ -151,7 +151,7 @@ public class SelectorTest {
             selectCase(exitChannel, Selector.BREAK_ACTION)
         );
         Future<?> fut = threadPool.submit(() -> {
-            for (int i = 0; i < 8192; i++) {
+            for (int i = 0; i < 2100; i++) {
                 bigChannel.write("Hello");
             }
             exitChannel.write(new Object());

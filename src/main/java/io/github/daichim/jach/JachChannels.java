@@ -8,7 +8,10 @@ import io.github.daichim.jach.channel.copier.RefCopier;
 import io.github.daichim.jach.channel.selector.ChannelAction;
 import io.github.daichim.jach.channel.selector.Selector;
 import io.github.daichim.jach.exception.TooManySelectorException;
+import io.github.daichim.jach.routines.Routines;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ForkJoinPool;
 import java.util.function.Consumer;
 
 /**
@@ -16,6 +19,12 @@ import java.util.function.Consumer;
  * explicit need for calling complex constructors or methods.
  */
 public class JachChannels {
+
+    private static ExecutorService executor;
+
+    static {
+        executor = ForkJoinPool.commonPool();
+    }
 
     /**
      * Create a {@link BufferedChannel} that stores strings with the given capacity. It uses {@link
@@ -114,5 +123,90 @@ public class JachChannels {
     public static Selector selector(ChannelAction... actions)
         throws TooManySelectorException, NullPointerException {
         return Selector.of(actions);
+    }
+
+    /**
+     * Set the {@link ExecutorService} which will be used to run routines for JaCh
+     *
+     * @param executor The {@link ExecutorService} to use for running routines in JaCh.
+     */
+    public static void setExecutor(ExecutorService executor) {
+        JachChannels.executor = executor;
+    }
+
+    /**
+     * Run a routine on JaCh's executor.
+     */
+    public static void go(Routines.Routine0 routine) {
+        executor.execute(routine::run);
+    }
+
+    /**
+     * Run a routine on JaCh's executor.
+     */
+    public static <X> void go(Routines.Routine1<X> routine, X x) {
+        executor.execute(() -> {
+            routine.run(x);
+        });
+    }
+
+    public static <X1, X2> void go(Routines.Routine2<X1, X2> routine, X1 x1, X2 x2) {
+        executor.execute(() -> {
+            routine.run(x1, x2);
+        });
+    }
+
+    public static <X1, X2, X3> void go(Routines.Routine3<X1, X2, X3> routine,
+                                       X1 x1, X2 x2, X3 x3) {
+        executor.execute(() -> {
+            routine.run(x1, x2, x3);
+        });
+    }
+
+    public static <X1, X2, X3, X4> void go(Routines.Routine4<X1, X2, X3, X4> routine,
+                                           X1 x1, X2 x2, X3 x3, X4 x4) {
+        executor.execute(() -> {
+            routine.run(x1, x2, x3, x4);
+        });
+    }
+
+
+    public static <X1, X2, X3, X4, X5> void go(Routines.Routine5<X1, X2, X3, X4, X5> routine,
+                                               X1 x1, X2 x2, X3 x3, X4 x4, X5 x5) {
+        executor.execute(() -> {
+            routine.run(x1, x2, x3, x4, x5);
+        });
+    }
+
+    public static <X1, X2, X3, X4, X5, X6> void go(
+        Routines.Routine6<X1, X2, X3, X4, X5, X6> routine,
+        X1 x1, X2 x2, X3 x3, X4 x4, X5 x5, X6 x6) {
+        executor.execute(() -> {
+            routine.run(x1, x2, x3, x4, x5, x6);
+        });
+    }
+
+    public static <X1, X2, X3, X4, X5, X6, X7> void go(
+        Routines.Routine7<X1, X2, X3, X4, X5, X6, X7> routine,
+        X1 x1, X2 x2, X3 x3, X4 x4, X5 x5, X6 x6, X7 x7) {
+        executor.execute(() -> {
+            routine.run(x1, x2, x3, x4, x5, x6, x7);
+        });
+    }
+
+    public static <X1, X2, X3, X4, X5, X6, X7, X8> void go(
+        Routines.Routine8<X1, X2, X3, X4, X5, X6, X7, X8> routine,
+        X1 x1, X2 x2, X3 x3, X4 x4, X5 x5, X6 x6, X7 x7, X8 x8) {
+        executor.execute(() -> {
+            routine.run(x1, x2, x3, x4, x5, x6, x7, x8);
+        });
+    }
+
+    public static <X1, X2, X3, X4, X5, X6, X7, X8, X9> void go(
+        Routines.Routine9<X1, X2, X3, X4, X5, X6, X7, X8, X9> routine,
+        X1 x1, X2 x2, X3 x3, X4 x4, X5 x5, X6 x6, X7 x7, X8 x8, X9 x9) {
+        executor.execute(() -> {
+            routine.run(x1, x2, x3, x4, x5, x6, x7, x8, x9);
+        });
     }
 }

@@ -172,7 +172,7 @@ public class SelectorTest {
         Assert.assertFalse(sel.isActive());
     }
 
-    @Test
+    @Test(enabled = false)
     public void untilDoneMultiThreadTest() throws Exception {
         Channel[] chans = createChannels();
         AtomicInteger counter = new AtomicInteger(0);

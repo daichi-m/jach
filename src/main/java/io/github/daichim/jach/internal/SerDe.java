@@ -8,9 +8,4 @@ import io.github.daichim.jach.channel.Channel;
  */
 public class SerDe {
 
-    public static <T> T identity(T msg) {
-        return msg;
-    }
-
-
 }

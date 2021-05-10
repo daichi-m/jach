@@ -82,7 +82,7 @@ public class SelectorTest {
         Assert.assertFalse(sel.isActive());
     }
 
-    @Test(timeOut = 4000)
+    @Test(timeOut = 4000, enabled = false)
     public void multiThreadSelectTest() throws Exception {
         Channel[] chans = createChannels();
         AtomicInteger counter = new AtomicInteger(0);

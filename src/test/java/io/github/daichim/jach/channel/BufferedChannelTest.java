@@ -29,7 +29,8 @@ public class BufferedChannelTest {
 
     public static final int CAPACITY = 5;
     public static final int LIFE_UNIVERSE_AND_EVERYTHING = 42;
-    private static final int SLEEP_INTERVAL = 500;
+    private static final int SLEEP_INTERVAL = 50;
+    private static final int TIMEOUT = 200;
 
     private ExecutorService threadPool;
 
@@ -60,7 +61,7 @@ public class BufferedChannelTest {
                     log.debug("Message id {} written", i);
                 }
             });
-            fut.get(1, TimeUnit.SECONDS);
+            fut.get(TIMEOUT, TimeUnit.MILLISECONDS);
             Assert.assertTrue(fut.isDone());
             log.debug("Messages written without blocking");
         }
@@ -77,7 +78,7 @@ public class BufferedChannelTest {
                     log.debug("Message id {} written", i);
                 }
             });
-            fut.get(2, TimeUnit.SECONDS);
+            fut.get(TIMEOUT, TimeUnit.MILLISECONDS);
             Assert.assertFalse(fut.isDone());
             log.debug("Thread is blocked in write");
         }
@@ -96,7 +97,7 @@ public class BufferedChannelTest {
                 }
             });
             try {
-                fut.get(1, TimeUnit.SECONDS);
+                fut.get(TIMEOUT, TimeUnit.MILLISECONDS);
             } catch (TimeoutException ignored) {
             }
             Assert.assertFalse(fut.isDone());
@@ -104,7 +105,7 @@ public class BufferedChannelTest {
 
             int msg = testChannel.read();
             log.debug("Read in message {}", msg);
-            fut.get(1, TimeUnit.SECONDS);
+            fut.get(TIMEOUT, TimeUnit.MILLISECONDS);
             Assert.assertTrue(fut.isDone());
             log.debug("Thread got unblocked after one write");
         }
@@ -125,7 +126,7 @@ public class BufferedChannelTest {
                 Assert.fail("Write did not timeout");
             });
             try {
-                fut.get(1, TimeUnit.SECONDS);
+                fut.get(TIMEOUT, TimeUnit.MILLISECONDS);
             } catch (TimeoutException ignored) {
             } catch (ExecutionException ex) {
                 throw ex.getCause();
@@ -146,7 +147,7 @@ public class BufferedChannelTest {
                 }
             });
             try {
-                fut.get(1, TimeUnit.SECONDS);
+                fut.get(TIMEOUT, TimeUnit.MILLISECONDS);
                 Assert.assertTrue(fut.isDone());
             } catch (Exception ex) {
                 Assert.fail();
@@ -170,7 +171,7 @@ public class BufferedChannelTest {
                 }
             });
             try {
-                fut.get(1, TimeUnit.SECONDS);
+                fut.get(TIMEOUT, TimeUnit.MILLISECONDS);
                 Assert.assertTrue(fut.isDone());
             } catch (Exception ex) {
                 Assert.fail();
@@ -238,10 +239,10 @@ public class BufferedChannelTest {
                 testChannel.write(LIFE_UNIVERSE_AND_EVERYTHING);
             }
         });
-        TimeUnit.SECONDS.sleep(1);
+        TimeUnit.MILLISECONDS.sleep(SLEEP_INTERVAL);
         Assert.assertEquals(afwCount.get(), CAPACITY);
         testChannel.read();
-        fut.get(1, TimeUnit.SECONDS);
+        fut.get(TIMEOUT, TimeUnit.MILLISECONDS);
         Assert.assertEquals(afwCount.get(), CAPACITY + 1);
         Assert.assertTrue(fut.isDone());
     }
@@ -266,10 +267,10 @@ public class BufferedChannelTest {
                 testChannel.write(LIFE_UNIVERSE_AND_EVERYTHING, 100, TimeUnit.MILLISECONDS);
             }
         });
-        TimeUnit.SECONDS.sleep(1);
+        TimeUnit.MILLISECONDS.sleep(SLEEP_INTERVAL);
         Assert.assertEquals(afwCount.get(), CAPACITY);
         try {
-            fut.get(1, TimeUnit.SECONDS);
+            fut.get(TIMEOUT, TimeUnit.MILLISECONDS);
         } catch (ExecutionException ignored) {
         }
         Assert.assertEquals(afwCount.get(), CAPACITY);
@@ -297,10 +298,10 @@ public class BufferedChannelTest {
                 testChannel.tryWrite(LIFE_UNIVERSE_AND_EVERYTHING);
             }
         });
-        TimeUnit.SECONDS.sleep(1);
+        TimeUnit.MILLISECONDS.sleep(SLEEP_INTERVAL);
         Assert.assertEquals(afwCount.get(), CAPACITY);
         try {
-            fut.get(1, TimeUnit.SECONDS);
+            fut.get(TIMEOUT, TimeUnit.MILLISECONDS);
         } catch (ExecutionException ignored) {
         }
         Assert.assertEquals(afwCount.get(), CAPACITY);
@@ -324,7 +325,7 @@ public class BufferedChannelTest {
                 Assert.assertEquals(msg, LIFE_UNIVERSE_AND_EVERYTHING);
             }
         });
-        fut.get(1, TimeUnit.SECONDS);
+        fut.get(TIMEOUT, TimeUnit.MILLISECONDS);
         Assert.assertTrue(fut.isDone());
         log.debug("Succesfully read in {} messages without blocking", CAPACITY);
     }
@@ -339,7 +340,7 @@ public class BufferedChannelTest {
             Assert.assertTrue(msg >= 0 && msg < 100);
         });
         try {
-            fut.get(1, TimeUnit.SECONDS);
+            fut.get(TIMEOUT, TimeUnit.MILLISECONDS);
         } catch (TimeoutException ignored) {
         }
         Assert.assertFalse(fut.isDone());
@@ -356,14 +357,14 @@ public class BufferedChannelTest {
             Assert.assertTrue(msg >= 0 && msg < 100);
         });
         try {
-            fut.get(1, TimeUnit.SECONDS);
+            fut.get(TIMEOUT, TimeUnit.MILLISECONDS);
         } catch (TimeoutException ignored) {
         }
         Assert.assertFalse(fut.isDone());
         log.debug("Read is blocked because of no data in channel");
 
         testChannel.write(42);
-        fut.get(1, TimeUnit.SECONDS);
+        fut.get(TIMEOUT, TimeUnit.MILLISECONDS);
         Assert.assertTrue(fut.isDone());
         log.debug("Read is unblocked now after data is inserted");
     }
@@ -409,7 +410,7 @@ public class BufferedChannelTest {
             }
         });
         try {
-            fut.get(1, TimeUnit.SECONDS);
+            fut.get(TIMEOUT, TimeUnit.MILLISECONDS);
         } catch (Exception ex) {
             throw ex.getCause();
         }
@@ -425,7 +426,7 @@ public class BufferedChannelTest {
         });
         testChannel.close();
         try {
-            fut.get(1, TimeUnit.SECONDS);
+            fut.get(TIMEOUT, TimeUnit.MILLISECONDS);
         } catch (ExecutionException ex) {
             throw (Exception) ex.getCause();
         }

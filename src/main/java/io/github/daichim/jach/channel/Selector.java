@@ -131,6 +131,7 @@ public class Selector implements AutoCloseable {
             public void close() {
                 String id = ca.getChannel().getId();
                 boolean success = selectorChannel.tryWrite(CLOSE_CHAN_PREFIX + id);
+                log.debug("Close message for channel {} written", id);
                 if (!success) {
                     selectorChannel.tryRead();
                     success = selectorChannel.tryWrite(CLOSE_CHAN_PREFIX + id);
@@ -255,7 +256,7 @@ public class Selector implements AutoCloseable {
             try {
                 String chanId = this.selectorChannel.tryRead();
                 if (chanId == null) {
-                    defaultAction.accept();
+                    defaultAction.accept(null);
                     continue;
                 }
                 if (chanId.startsWith(CLOSE_CHAN_PREFIX)) {
@@ -269,7 +270,7 @@ public class Selector implements AutoCloseable {
 
                 Object msg = ca.getChannel().tryRead();
                 if (msg == null) {
-                    defaultAction.accept();
+                    defaultAction.accept(null);
                     continue;
                 } else if (ca.getAction() == BREAK_ACTION) {
                     this.close();
@@ -292,6 +293,7 @@ public class Selector implements AutoCloseable {
         if (this.channelActions.isEmpty()) {
             close();
         }
+        log.debug("Channel removed: {}", channel);
     }
 
     /**

@@ -1,6 +1,3 @@
----
-layout: home
----
 
 # JaCh
 ## Bringing power of golang channels to Java.

@@ -25,7 +25,7 @@ description: >- # this means to ignore newlines until "baseurl:"
 github_username:  daichi-m
 
 # Build settings
-theme: jekyll-theme-slate
+theme: jekyll-theme-modernist
 plugins:
   - jekyll-feed
 

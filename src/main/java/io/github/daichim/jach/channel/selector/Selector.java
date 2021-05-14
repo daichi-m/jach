@@ -10,6 +10,7 @@ import io.github.daichim.jach.exception.ClosedChannelException;
 import io.github.daichim.jach.exception.NoSuchChannelElementException;
 import io.github.daichim.jach.exception.TooManySelectorException;
 import io.github.daichim.jach.internal.AfterWriteAction;
+import javafx.util.Pair;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
@@ -17,6 +18,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -196,6 +198,47 @@ public class Selector implements AutoCloseable {
     }
 
     /**
+     * Checks if there are any message available in any of the channel. If so then execute the
+     * corresponding action for the message on that channel. Otherwise, executes the default action
+     * provided.
+     *
+     * @param defaultAction The default action to run if none of the channels have messages
+     *                      available.
+     *
+     * @throws IllegalStateException If there is an issue with the {@link Selector} (selector's
+     *                               internal channel is closed, or there is a null channel or
+     *                               action registered with the selector). Generally these scenarios
+     *                               should not occur.
+     */
+    public void selectOrDefault(Action defaultAction) throws IllegalStateException {
+        try {
+            if (!this.isActive()) {
+                throw new IllegalStateException("Selector is closed");
+            }
+            Optional<Pair<Object, Consumer>> anyChan =
+                this.channelActions.values()
+                    .stream()
+                    .map(ca -> {
+                        Object msg = ca.getChannel().tryRead();
+                        return new Pair<>(msg, ca.getAction());
+                    })
+                    .filter(msgAct -> msgAct.getKey() != null)
+                    .findAny();
+            if (anyChan.isPresent()) {
+                Pair<Object, Consumer> msgAct = anyChan.get();
+                msgAct.getValue().accept(msgAct.getKey());
+            } else {
+                defaultAction.accept();
+            }
+        } catch (ClosedChannelException |
+            NoSuchChannelElementException |
+            NullPointerException ex) {
+
+            throw new IllegalStateException(ex);
+        }
+    }
+
+    /**
      * Runs an loop over all the channels and executes the action associated with that channel as
      * and when a message is received on that channel. The loop breaks when all the channels are
      * closed or BREAK_ACTION is called on receiving message on any channel.
@@ -291,6 +334,7 @@ public class Selector implements AutoCloseable {
             }
         }
     }
+
 
     private void closeChannel(String channel) {
         this.channelActions.remove(channel);

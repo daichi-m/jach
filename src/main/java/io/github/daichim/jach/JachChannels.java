@@ -130,7 +130,7 @@ public class JachChannels {
      *
      * @param executor The {@link ExecutorService} to use for running routines in JaCh.
      */
-    public static void setExecutor(ExecutorService executor) {
+    public static void setGlobalExecutor(ExecutorService executor) {
         JachChannels.executor = executor;
     }
 

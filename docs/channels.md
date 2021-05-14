@@ -5,9 +5,9 @@ permalink: /channels/
 
 <table style="width: 100%;">
   <tr>
-    <td style="text-align: left;"><a href="/installing">&#x25C0; Installing</a></td>
-    <td style="text-align: center;"><a href="/index">&#x1F3E0; Home </a></td>
-    <td style="text-align: right;"><a href="/selector">Selector &#x25BA;</a></td>
+    <td style="text-align: left;"><a href="/jach/installing">&#x25C0; Installing</a></td>
+    <td style="text-align: center;"><a href="/jach/index">&#x1F3E0; Home </a></td>
+    <td style="text-align: right;"><a href="/jach/selector">Selector &#x25BA;</a></td>
   </tr>
 </table>
 
@@ -220,8 +220,8 @@ class Iteration {
 
 <table style="width: 100%;">
   <tr>
-    <td style="text-align: left;"><a href="/installing">&#x25C0; Installing</a></td>
-    <td style="text-align: center;"><a href="/index">&#x1F3E0; Home </a></td>
-    <td style="text-align: right;"><a href="/selector">Selector &#x25BA;</a></td>
+    <td style="text-align: left;"><a href="/jach/installing">&#x25C0; Installing</a></td>
+    <td style="text-align: center;"><a href="/jach/index">&#x1F3E0; Home </a></td>
+    <td style="text-align: right;"><a href="/jach/selector">Selector &#x25BA;</a></td>
   </tr>
 </table>

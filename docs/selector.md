@@ -5,9 +5,9 @@ permalink: /selector/
 
 <table style="width: 100%;">
   <tr>
-    <td style="text-align: left;"><a href="/channels">&#x25C0; Channels</a></td>
-    <td style="text-align: center;"><a href="/index">&#x1F3E0; Home </a></td>
-    <td style="text-align: right;"><a href="/advanced">Advanced &#x25BA;</a></td>
+    <td style="text-align: left;"><a href="/jach/channels">&#x25C0; Channels</a></td>
+    <td style="text-align: center;"><a href="/jach/index">&#x1F3E0; Home </a></td>
+    <td style="text-align: right;"><a href="/jach/advanced">Advanced &#x25BA;</a></td>
   </tr>
 </table>
 
@@ -107,8 +107,8 @@ class Selector {
 
 <table style="width: 100%;">
   <tr>
-    <td style="text-align: left;"><a href="/channels">&#x25C0; Channels</a></td>
-    <td style="text-align: center;"><a href="/index">&#x1F3E0; Home </a></td>
-    <td style="text-align: right;"><a href="/advanced">Advanced &#x25BA;</a></td>
+    <td style="text-align: left;"><a href="/jach/channels">&#x25C0; Channels</a></td>
+    <td style="text-align: center;"><a href="/jach/index">&#x1F3E0; Home </a></td>
+    <td style="text-align: right;"><a href="/jach/advanced">Advanced &#x25BA;</a></td>
   </tr>
 </table>

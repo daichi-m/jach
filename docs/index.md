@@ -7,10 +7,10 @@ to do it without violating Java's syntax.
 
 # Table of Contents
 
-1. [Brief Concepts](/concepts)
-2. [Installing JaCh](/installing)
-3. [Channels](/channels/)
-4. [Selector](/selector/)
-5. [Advanced Usage](/advanced/)
-6. [About](/about/)
+1. [Brief Concepts](/jach/concepts)
+2. [Installing JaCh](/jach/installing)
+3. [Channels](/jach/channels/)
+4. [Selector](/jach/selector/)
+5. [Advanced Usage](/jach/advanced/)
+6. [About](/jach/about/)
  

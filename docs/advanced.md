@@ -5,9 +5,9 @@ permalink: /advanced/
 
 <table style="width: 100%;">
   <tr>
-    <td style="text-align: left;"><a href="/selector">&#x25C0; Selector</a></td>
-    <td style="text-align: center;"><a href="/index">&#x1F3E0; Home </a></td>
-    <td style="text-align: right;"><a href="/examples">Examples &#x25BA;</a></td>
+    <td style="text-align: left;"><a href="/jach/selector">&#x25C0; Selector</a></td>
+    <td style="text-align: center;"><a href="/jach/index">&#x1F3E0; Home </a></td>
+    <td style="text-align: right;"><a href="/jach/examples">Examples &#x25BA;</a></td>
   </tr>
 </table>
 
@@ -91,8 +91,8 @@ used in scenarios where speed is paramount.
 
 <table style="width: 100%;">
   <tr>
-    <td style="text-align: left;"><a href="/selector">&#x25C0; Selector</a></td>
-    <td style="text-align: center;"><a href="/index">&#x1F3E0; Home </a></td>
-    <td style="text-align: right;"><a href="/examples">Examples &#x25BA;</a></td>
+    <td style="text-align: left;"><a href="/jach/selector">&#x25C0; Selector</a></td>
+    <td style="text-align: center;"><a href="/jach/index">&#x1F3E0; Home </a></td>
+    <td style="text-align: right;"><a href="/jach/examples">Examples &#x25BA;</a></td>
   </tr>
 </table>

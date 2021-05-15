@@ -1,6 +1,8 @@
 title: JaCh
 email: frendztitan@gmail.com
 github_username:  daichi-m
+description: "Golang channels in Java"
+url: "https://daichi-m.github.io/jach/index"
 
 # Build settings
 theme: jekyll-theme-modernist

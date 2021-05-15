@@ -1,4 +1,7 @@
-package io.github.daichim.jach;
+package io.github.daichim.jach.channel;
+
+import io.github.daichim.jach.channel.copier.Copier;
+import io.github.daichim.jach.channel.copier.KryoCopier;
 
 /**
  * {@link UnbufferedChannel} is a special {@link Channel} where only one message can be written and
@@ -9,10 +12,12 @@ package io.github.daichim.jach;
  */
 public class UnbufferedChannel<T> extends BufferedChannel<T> {
 
-    public UnbufferedChannel() {
-        super(1);
+    public UnbufferedChannel(Class<T> clazz) {
+        super(1, clazz, new KryoCopier<>(clazz));
     }
 
-
+    public UnbufferedChannel(Class<T> clazz, Copier<T> copier) {
+        super(1, clazz, copier);
+    }
 
 }

@@ -1,0 +1,24 @@
+codecov:
+  require_ci_to_pass: yes
+
+coverage:
+  precision: 1
+  round: down
+  range: "60...75"
+
+parsers:
+  gcov:
+    branch_detection:
+      conditional: yes
+      loop: yes
+      method: no
+      macro: no
+
+ignore:
+  - 'src/main/java/io/github/daichim/jach/exception/*Exception.java'
+  - 'src/main/java/io/github/daichim/jach/JachChannels.java'
+
+comment:
+  layout: "reach,diff,flags,files,footer"
+  behavior: default
+  require_changes: no

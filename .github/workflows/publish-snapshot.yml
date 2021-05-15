@@ -1,16 +1,11 @@
 # This workflow will build a package using Maven and then publish it to GitHub packages when a release is created
 # For more information see: https://github.com/actions/setup-java/blob/main/docs/advanced-usage.md#apache-maven-with-a-settings-path
 
-name: Maven Publish Snapshot
+name: Build
 
 on:
   push:
     branches:
-      - 'main'
-#      - 'develop'
-  pull_request:
-    branches:
-      - 'main'
       - 'develop'
 
 jobs:
@@ -50,7 +45,11 @@ jobs:
         MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
         WORKSPACE: ${{ github.workspace }}
 
+    - name: Codecov
+      run: bash <(curl -s https://codecov.io/bash)
+
     - name: Delete GPG Key
+      if: always()
       run: >-
         gpg --batch --pinentry-mode loopback --yes --delete-secret-keys C6349417E6D3459640639F33F599DC1F5195036F &&
         gpg --pinentry-mode loopback --yes --batch --delete-keys C6349417E6D3459640639F33F599DC1F5195036F

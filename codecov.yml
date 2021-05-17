@@ -17,6 +17,7 @@ parsers:
 ignore:
   - 'src/main/java/io/github/daichim/jach/exception/*Exception.java'
   - 'src/main/java/io/github/daichim/jach/JachChannels.java'
+  - 'src/main/java/io/github/daichim/jach/JachTime.java'
 
 comment:
   layout: "reach,diff,flags,files,footer"

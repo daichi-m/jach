@@ -469,7 +469,7 @@ public class BufferedChannelTest {
             });
             futs.put(i, fut);
         }
-        TimeUnit.MILLISECONDS.sleep(1);
+        TimeUnit.MILLISECONDS.sleep(100);
         testChannel.close();
 
         for (Map.Entry<Integer, Future<?>> f : futs.entrySet()) {

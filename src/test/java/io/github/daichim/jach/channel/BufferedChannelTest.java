@@ -571,7 +571,7 @@ public class BufferedChannelTest {
             actionCtr.incrementAndGet();
         };
         Future<?> fut = threadPool.submit(() -> {
-            for (int i = 0; i < 100; i++) {
+            for (int i = 0; i < 25; i++) {
                 testChannel.write(increasingCtr.getAndIncrement());
                 log.debug("Written value: {}", increasingCtr.get());
             }
@@ -579,7 +579,7 @@ public class BufferedChannelTest {
         });
         TimeUnit.MILLISECONDS.sleep(10);
         testChannel.forEach(action);
-        Assert.assertEquals(actionCtr.get(), 100);
+        Assert.assertEquals(actionCtr.get(), 25);
     }
 
     @Test(expectedExceptions = UnsupportedOperationException.class)

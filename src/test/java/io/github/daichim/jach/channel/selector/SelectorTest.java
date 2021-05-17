@@ -190,7 +190,7 @@ public class SelectorTest {
             chans[2].write("EXIT");
         });
         sel.untilDone();
-        Assert.assertEquals(counter.get(), 100);
+        Assert.assertEquals(counter.get(), 20);
         Assert.assertFalse(sel.isActive());
     }
 

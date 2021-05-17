@@ -567,7 +567,7 @@ public class BufferedChannelTest {
         AtomicInteger actionCtr = new AtomicInteger(0);
         Consumer<Integer> action = msg -> {
             log.debug("Read in {}", msg);
-            Assert.assertTrue(msg < increasingCtr.get());
+            Assert.assertTrue(msg <= increasingCtr.get());
             actionCtr.incrementAndGet();
         };
         Future<?> fut = threadPool.submit(() -> {

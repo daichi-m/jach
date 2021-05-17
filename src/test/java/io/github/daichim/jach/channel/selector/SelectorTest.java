@@ -144,7 +144,7 @@ public class SelectorTest {
         AtomicInteger counter = new AtomicInteger(0);
         Selector sel = selector(
             selectCase(bigChannel, s -> {
-                log.debug("Channel1 read in {}", s);
+                // log.debug("Channel1 read in {}", s);
                 Assert.assertEquals(s, "Hello");
                 counter.incrementAndGet();
             }),
@@ -179,7 +179,7 @@ public class SelectorTest {
             selectCase(chans[2], Selector.BREAK_ACTION)
         );
         threadPool.submit(() -> {
-            for (int i = 0; i < 100; i++) {
+            for (int i = 0; i < 20; i++) {
                 boolean c = ThreadLocalRandom.current().nextBoolean();
                 if (c) {
                     chans[0].write("Universe");
@@ -190,7 +190,7 @@ public class SelectorTest {
             chans[2].write("EXIT");
         });
         sel.untilDone();
-        Assert.assertEquals(counter.get(), 100);
+        Assert.assertEquals(counter.get(), 20);
         Assert.assertFalse(sel.isActive());
     }
 

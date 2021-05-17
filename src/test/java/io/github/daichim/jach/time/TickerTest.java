@@ -58,7 +58,6 @@ public class TickerTest {
         TickCounter ctr = new TickCounter();
         Selector selector = selector(
             selectCase(ticker.C, instant -> {
-                Assert.assertFalse(stopped.get());
                 long duration = ctr.tick();
                 log.debug("Duration: {} millis", duration);
                 Assert.assertTrue(duration >= tickInterval - 10);
@@ -78,11 +77,16 @@ public class TickerTest {
     public void resetTickerTest() {
         ScheduledExecutorService executor = Executors.newScheduledThreadPool(2);
         AtomicInteger tickInterval = new AtomicInteger(100);
-        AtomicBoolean stopped = new AtomicBoolean(false);
+        AtomicBoolean reset = new AtomicBoolean(false);
         Ticker ticker = new Ticker(tickInterval.get(), TimeUnit.MILLISECONDS, executor);
         TickCounter ctr = new TickCounter();
         Selector selector = selector(
             selectCase(ticker.C, instant -> {
+                if (reset.get()) {
+                    reset.compareAndSet(true, false);
+                    ctr.tick();
+                    return;
+                }
                 long duration = ctr.tick();
                 log.debug("Duration: {} millis", duration);
                 Assert.assertTrue(duration >= tickInterval.get() - 10);
@@ -92,13 +96,10 @@ public class TickerTest {
         executor.schedule(() -> {
             ticker.reset(50, TimeUnit.MILLISECONDS);
             tickInterval.compareAndSet(100, 50);
+            reset.compareAndSet(false, true);
         }, 1, TimeUnit.SECONDS);
-        executor.schedule(() -> {
-            ticker.stop();
-            stopped.set(true);
-        }, 2, TimeUnit.SECONDS);
+        executor.schedule(ticker::stop, 2, TimeUnit.SECONDS);
         selector.untilDone();
-        Assert.assertTrue(stopped.get());
     }
 
     private class TickCounter {

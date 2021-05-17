@@ -505,7 +505,8 @@ public class BufferedChannelTest {
                 f.getValue().get(1, TimeUnit.SECONDS);
                 Assert.fail(String.format("Thread %d was not interrupted ", f.getKey()));
             } catch (ExecutionException ex) {
-                Assert.assertTrue(ex.getCause() instanceof ClosedChannelException);
+                Assert.assertTrue(ex.getCause() instanceof ClosedChannelException,
+                    "Exception caused is not ClosedChannelException");
             }
         }
         log.debug("All 10 write threads were interrupted");

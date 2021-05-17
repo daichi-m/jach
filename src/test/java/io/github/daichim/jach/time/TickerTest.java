@@ -46,7 +46,6 @@ public class TickerTest {
 
         log.debug("Statistics: {}", stats);
         Assert.assertEquals((int) Math.round(stats.getAverage()), tickInterval);
-        Assert.assertEquals(ctr.count.get(), 2000 / tickInterval);
     }
 
     @Test(timeOut = 3000)
@@ -70,7 +69,6 @@ public class TickerTest {
         }, 2, TimeUnit.SECONDS);
         selector.untilDone();
         Assert.assertTrue(stopped.get());
-        Assert.assertEquals(ctr.count.get(), 2000 / tickInterval);
     }
 
     @Test(timeOut = 3000)

@@ -579,6 +579,7 @@ public class BufferedChannelTest {
         });
         TimeUnit.MILLISECONDS.sleep(10);
         testChannel.forEach(action);
+        log.debug("ForEach action counter called {} times", actionCtr.get());
         Assert.assertEquals(actionCtr.get(), 25);
     }
 

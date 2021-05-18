@@ -469,7 +469,7 @@ public class BufferedChannelTest {
             });
             futs.put(i, fut);
         }
-        TimeUnit.MILLISECONDS.sleep(1);
+        TimeUnit.MILLISECONDS.sleep(100);
         testChannel.close();
 
         for (Map.Entry<Integer, Future<?>> f : futs.entrySet()) {
@@ -497,7 +497,7 @@ public class BufferedChannelTest {
             });
             futs.put(i, fut);
         }
-        TimeUnit.MILLISECONDS.sleep(1);
+        TimeUnit.MILLISECONDS.sleep(100);
         testChannel.close();
 
         for (Map.Entry<Integer, Future<?>> f : futs.entrySet()) {
@@ -505,7 +505,8 @@ public class BufferedChannelTest {
                 f.getValue().get(1, TimeUnit.SECONDS);
                 Assert.fail(String.format("Thread %d was not interrupted ", f.getKey()));
             } catch (ExecutionException ex) {
-                Assert.assertTrue(ex.getCause() instanceof ClosedChannelException);
+                Assert.assertTrue(ex.getCause() instanceof ClosedChannelException,
+                    "Exception caused is not ClosedChannelException");
             }
         }
         log.debug("All 10 write threads were interrupted");
@@ -566,11 +567,11 @@ public class BufferedChannelTest {
         AtomicInteger actionCtr = new AtomicInteger(0);
         Consumer<Integer> action = msg -> {
             log.debug("Read in {}", msg);
-            Assert.assertTrue(msg < increasingCtr.get());
+            Assert.assertTrue(msg <= increasingCtr.get());
             actionCtr.incrementAndGet();
         };
         Future<?> fut = threadPool.submit(() -> {
-            for (int i = 0; i < 100; i++) {
+            for (int i = 0; i < 25; i++) {
                 testChannel.write(increasingCtr.getAndIncrement());
                 log.debug("Written value: {}", increasingCtr.get());
             }
@@ -578,7 +579,8 @@ public class BufferedChannelTest {
         });
         TimeUnit.MILLISECONDS.sleep(10);
         testChannel.forEach(action);
-        Assert.assertEquals(actionCtr.get(), 100);
+        log.debug("ForEach action counter called {} times", actionCtr.get());
+        Assert.assertEquals(actionCtr.get(), 25);
     }
 
     @Test(expectedExceptions = UnsupportedOperationException.class)

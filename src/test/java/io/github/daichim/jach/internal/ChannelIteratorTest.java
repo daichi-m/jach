@@ -70,9 +70,9 @@ public class ChannelIteratorTest {
         BufferedChannel<Integer> channel = Mockito.mock(BufferedChannel.class);
         ChannelIterator<Integer> iterator = new ChannelIterator<>(channel);
 
-        int readEarly = 20;
+        int readEarly = 15;
         Stubber stubber = Mockito.doReturn(0);
-        for (int i=1; i<100; i++) {
+        for (int i=1; i<25; i++) {
             stubber.doReturn(i);
         }
         stubber.doThrow(ClosedChannelException.class).when(channel).read();
@@ -91,7 +91,7 @@ public class ChannelIteratorTest {
         log.info("Read in {} messages", readEarly);
 
         iterator.forEachRemaining(action);
-        Assert.assertEquals(actionCtr.intValue(), 100 - readEarly);
+        Assert.assertEquals(actionCtr.intValue(), 25 - readEarly);
         log.info("For each remaining action called for {} messages", (100 - readEarly));
     }
 

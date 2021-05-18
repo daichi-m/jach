@@ -4,6 +4,7 @@ import io.github.daichim.jach.channel.BufferedChannel;
 import io.github.daichim.jach.exception.ClosedChannelException;
 import io.github.daichim.jach.exception.NoSuchChannelElementException;
 import lombok.extern.slf4j.Slf4j;
+import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.stubbing.Stubber;
 import org.testng.Assert;
@@ -44,6 +45,51 @@ public class ChannelIteratorTest {
         int msg = iterator.next();
         Assert.assertEquals(msg, LIFE_UNIVERSE_AND_EVERYTHING);
         log.info("Iterator read in next element after NPE");
+    }
+
+    @Test(description = "Check next after channel is closed but has data")
+    public void testNextClosedChannel() throws Exception {
+        BufferedChannel<Integer> channel = Mockito.mock(BufferedChannel.class);
+        ChannelIterator<Integer> iterator = new ChannelIterator<>(channel);
+        Mockito.doReturn(LIFE_UNIVERSE_AND_EVERYTHING)
+            .doReturn(LIFE_UNIVERSE_AND_EVERYTHING)
+            .doThrow(NoSuchChannelElementException.class)
+            .when(channel).read();
+        Mockito.doReturn(true)
+            .doReturn(true)
+            .doReturn(false)
+            .when(channel).canRead();
+
+        iterator.markDone();
+
+        int msg = iterator.next();
+        Assert.assertEquals(msg, LIFE_UNIVERSE_AND_EVERYTHING);
+        msg = iterator.next();
+        Assert.assertEquals(msg, LIFE_UNIVERSE_AND_EVERYTHING);
+        try {
+            iterator.next();
+            Assert.fail("Should have failed in next since no more element in channel");
+        } catch (NoSuchChannelElementException ex) {
+            Assert.assertTrue(true);
+        }
+    }
+
+    @Test(description = "Check next after channel is closed but has no  data")
+    public void testNextClosedChannelNoData() throws Exception {
+        BufferedChannel<Integer> channel = Mockito.mock(BufferedChannel.class);
+        ChannelIterator<Integer> iterator = new ChannelIterator<>(channel);
+        Mockito.doThrow(NoSuchChannelElementException.class)
+            .when(channel).read();
+        Mockito.doReturn(false)
+            .when(channel).canRead();
+
+        iterator.markDone();
+        try {
+            iterator.next();
+            Assert.fail("Should have failed in next since no more element in channel");
+        } catch (NoSuchChannelElementException ex) {
+            Assert.assertTrue(true);
+        }
     }
 
     @Test(expectedExceptions = NoSuchChannelElementException.class,

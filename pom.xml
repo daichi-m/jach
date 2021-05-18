@@ -4,7 +4,7 @@
 
     <groupId>io.github.daichi-m</groupId>
     <artifactId>jach</artifactId>
-    <version>0.1.2</version>
+    <version>0.1.2-SNAPSHOT</version>
     <name>JaCh</name>
     <url>https://github.com/daichi-m/jach</url>
     <description>

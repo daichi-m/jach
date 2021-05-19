@@ -4,7 +4,7 @@
 
     <groupId>io.github.daichi-m</groupId>
     <artifactId>jach</artifactId>
-    <version>0.1.3-SNAPSHOT</version>
+    <version>0.1.3</version>
     <name>JaCh</name>
     <url>https://github.com/daichi-m/jach</url>
     <description>
@@ -30,7 +30,7 @@
     <scm>
         <connection>scm:git:https://github.com/daichi-m/jach.git</connection>
         <developerConnection>scm:git:https://github.com/daichi-m/jach.git</developerConnection>
-        <tag>jach-0.1.2</tag>
+        <tag>jach-0.1.3</tag>
         <url>https://github.com/daichi-m/jach.git</url>
     </scm>
     <ciManagement>

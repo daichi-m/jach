@@ -32,7 +32,7 @@ public class ChannelIterator<T> implements Iterator<T> {
      */
     @Override
     synchronized public boolean hasNext() {
-        return !this.done;
+        return !this.done || parentChannel.canRead();
     }
 
     /**

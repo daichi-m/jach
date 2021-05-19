@@ -38,7 +38,6 @@ public class TickerTest {
                 stats.accept((int) duration);
                 log.debug("Duration: {} millis", duration);
                 Assert.assertTrue(duration >= tickInterval - 10);
-                Assert.assertTrue(duration <= tickInterval + 10);
             }),
             selectCase(exitCh, Selector.BREAK_ACTION));
         executor.schedule(() -> exitCh.write("EXIT"), 2, TimeUnit.SECONDS);
@@ -60,8 +59,6 @@ public class TickerTest {
                 long duration = ctr.tick();
                 log.debug("Duration: {} millis", duration);
                 Assert.assertTrue(duration >= tickInterval - 10);
-                Assert.assertTrue(duration <= tickInterval + 10);
-
             }));
         executor.schedule(() -> {
             ticker.stop();
@@ -88,8 +85,6 @@ public class TickerTest {
                 long duration = ctr.tick();
                 log.debug("Duration: {} millis", duration);
                 Assert.assertTrue(duration >= tickInterval.get() - 10);
-                Assert.assertTrue(duration <= tickInterval.get() + 10);
-
             }));
         executor.schedule(() -> {
             ticker.reset(50, TimeUnit.MILLISECONDS);

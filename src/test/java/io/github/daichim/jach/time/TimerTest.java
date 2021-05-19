@@ -28,7 +28,6 @@ public class TimerTest {
         Instant tick = timer.C.read();
         Duration duration = Duration.between(start, tick);
         Assert.assertTrue(duration.toMillis() >= interval.get() - 10);
-        Assert.assertTrue(duration.toMillis() <= interval.get() + 10);
     }
 
     @Test(expectedExceptions = NoSuchChannelElementException.class)
@@ -51,7 +50,6 @@ public class TimerTest {
         Instant tick = timer.C.read();
         Duration duration = Duration.between(start, tick);
         Assert.assertTrue(duration.toMillis() >= interval - 10);
-        Assert.assertTrue(duration.toMillis() <= interval + 10);
     }
 
     @Test(timeOut = 2000)

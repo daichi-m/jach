@@ -1,5 +1,6 @@
 package io.github.daichim.jach;
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import io.github.daichim.jach.channel.Action;
 import io.github.daichim.jach.channel.Channel;
 import io.github.daichim.jach.exception.NoSuchChannelElementException;
@@ -24,7 +25,8 @@ public class JachTime {
     private static ScheduledExecutorService executor;
 
     static {
-        executor = Executors.newScheduledThreadPool(10);
+        executor = Executors.newScheduledThreadPool(10,
+            new ThreadFactoryBuilder().setNameFormat("jach-time-%d").setDaemon(true).build());
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
 
             try {

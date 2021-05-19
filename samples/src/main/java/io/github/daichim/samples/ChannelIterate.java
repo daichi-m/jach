@@ -11,7 +11,7 @@ public class ChannelIterate {
         Channel<String> queue = makeStr(2);
         queue.write("one");
         queue.write("two");
-
+        queue.close();
 
         try {
             for (String elem : queue) {

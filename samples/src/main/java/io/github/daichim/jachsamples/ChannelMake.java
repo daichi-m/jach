@@ -1,4 +1,4 @@
-package io.github.daichim.samples;
+package io.github.daichim.jachsamples;
 import io.github.daichim.jach.channel.Channel;
 
 import static io.github.daichim.jach.JachChannels.*;

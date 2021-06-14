@@ -1,4 +1,4 @@
-package io.github.daichim.samples;
+package io.github.daichim.jachsamples;
 
 import lombok.SneakyThrows;
 

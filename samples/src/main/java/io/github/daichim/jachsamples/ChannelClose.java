@@ -1,7 +1,5 @@
-package io.github.daichim.samples;
+package io.github.daichim.jachsamples;
 
-import com.sun.org.apache.xpath.internal.operations.Bool;
-import io.github.daichim.jach.JachChannels;
 import io.github.daichim.jach.channel.Channel;
 import io.github.daichim.jach.exception.NoSuchChannelElementException;
 

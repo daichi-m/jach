@@ -1,6 +1,5 @@
-package io.github.daichim.samples;
+package io.github.daichim.jachsamples;
 
-import io.github.daichim.jach.JachTime;
 import io.github.daichim.jach.channel.Channel;
 import io.github.daichim.jach.channel.selector.Selector;
 
@@ -11,7 +10,7 @@ import static io.github.daichim.jach.JachChannels.makeStr;
 import static io.github.daichim.jach.JachChannels.selectCase;
 import static io.github.daichim.jach.JachChannels.selector;
 import static io.github.daichim.jach.JachTime.after;
-import static io.github.daichim.samples.Utilities.sleep;
+import static io.github.daichim.jachsamples.Utilities.sleep;
 
 public class Timeout {
 

@@ -1,13 +1,12 @@
-package io.github.daichim.samples;
+package io.github.daichim.jachsamples;
 
-import io.github.daichim.jach.JachTime;
 import io.github.daichim.jach.time.Timer;
 
 import java.util.concurrent.TimeUnit;
 
 import static io.github.daichim.jach.JachChannels.go;
 import static io.github.daichim.jach.JachTime.timer;
-import static io.github.daichim.samples.Utilities.sleep;
+import static io.github.daichim.jachsamples.Utilities.sleep;
 
 public class Timers {
 
